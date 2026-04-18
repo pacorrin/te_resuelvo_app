@@ -52,6 +52,7 @@ export default function CheckoutContent({
       customer: {
         name: tender.customer?.name ?? "",
         email: tender.customer?.email ?? "",
+        phone: tender.customer?.phone ?? "",
       },
     };
   }, [tenderBuyer]);

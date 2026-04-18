@@ -20,6 +20,7 @@ export type CheckoutLeadSummaryProps = {
   customer: {
     name: string;
     email: string;
+    phone: string;
   };
 };
 
@@ -111,7 +112,7 @@ export default function CheckoutLeadSummary({
                 Teléfono
               </p>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {lead.phone || "—"}
+                {customer.phone ? customer.phone.slice(0, 3).padEnd(customer.phone.length, "*") : "—"}
               </p>
             </div>
           </div>

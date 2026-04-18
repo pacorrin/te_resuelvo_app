@@ -16,6 +16,7 @@ export interface LeadListItemData {
   customer: {
     name: string;
     email: string;
+    phone: string;
   };
   phone: string;
   /** Código postal; maps from `Tender.zipcode`. */

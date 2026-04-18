@@ -32,6 +32,7 @@ export default async function CheckoutPage({
           ? {
               name: row.tender.customer.name ?? null,
               email: row.tender.customer.email,
+              phone: row.tender.customer.phone ?? null,
             }
           : null,
       },

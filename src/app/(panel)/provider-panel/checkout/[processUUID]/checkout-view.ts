@@ -6,7 +6,7 @@ export type CheckoutTenderBuyerView = {
     zipcode: string;
     createdAt: string;
     service: { name: string; leadPrice: number } | null;
-    customer: { name: string | null; email: string } | null;
+    customer: { name: string | null; email: string; phone: string | null } | null;
   };
   buyer: {
     name: string | null;
