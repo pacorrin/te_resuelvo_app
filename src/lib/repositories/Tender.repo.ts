@@ -52,6 +52,7 @@ export class TenderRepository {
         "id",
         "description",
         "personName",
+        "personPhone",
         "customerId",
         "tenderAddress",
         "tenderAddressReference",

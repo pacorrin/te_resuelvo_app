@@ -180,9 +180,11 @@ export function CustomerRequestForm({
             )
         : undefined;
 
+        
+
     const data: CreateTenderFromPublicSiteDTO = {
       personName: formData.get("name") as string,
-      phone: formData.get("phone") as string,
+      personPhone: formData.get("phone") as string,
       email: formData.get("email") as string,
       serviceId: Number(selectedService),
       tenderAddress: addressLine.trim(),
@@ -193,6 +195,8 @@ export function CustomerRequestForm({
       longitude: selectedLocation?.lng.toString() || "",
       questionSetAnswers,
     };
+
+    console.log(data);
 
     const result = await _createTenderFromPublicSiteAction(data);
     if (result.success && result.data) {

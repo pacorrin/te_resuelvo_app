@@ -11,6 +11,7 @@ export interface CreateTenderDTO {
   serviceId: number;
   description: string;
   personName: string;
+  personPhone: string;
   customerId: number;
   tenderAddress: string;
   tenderAddressReference?: string | null;
@@ -23,7 +24,7 @@ export interface CreateTenderFromPublicSiteDTO {
   serviceId: number;
   description: string;
   personName: string;
-  phone: string;
+  personPhone: string;
   email: string;
   customerId?: number;
   tenderAddress: string;
@@ -71,6 +72,7 @@ export interface TenderDTO {
   serviceId: number;
   description: string;
   personName: string;
+  personPhone: string;
   customerId: number;
   tenderAddress: string;
   tenderAddressReference?: string | null;
@@ -89,6 +91,7 @@ export interface TenderClientListDTO {
   serviceId: number;
   description: string;
   personName: string;
+  personPhone: string;
   customerId: number;
   tenderAddress: string;
   tenderAddressReference?: string | null;
@@ -108,7 +111,6 @@ export interface TenderClientListDTO {
     name: string | null;
   } | null;
 }
-
 
 export interface InitPurchaseProcessDTO {
   tenderId: number;

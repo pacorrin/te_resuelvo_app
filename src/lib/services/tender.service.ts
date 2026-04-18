@@ -18,6 +18,7 @@ export class TenderService {
       serviceId: tender.serviceId,
       description: tender.description,
       personName: tender.personName,
+      personPhone: tender.personPhone,
       customerId: tender.customerId,
       tenderAddress: tender.tenderAddress,
       tenderAddressReference: tender.tenderAddressReference,
@@ -74,17 +75,17 @@ export class TenderService {
   static async createTenderFromPublicSite(
     data: CreateTenderFromPublicSiteDTO,
   ): Promise<Tender> {
-    const { email, phone, personName, questionSetAnswers, ...tenderData } = data;
-    console.log(questionSetAnswers);
+    const { email, personPhone, personName, questionSetAnswers, ...tenderData } = data;
     const user = await UserService.createUserFromPublicSite({
       email,
       name: personName,
-      phone,
+      phone: personPhone,
     });
 
     const tender = await TenderRepository.createTender({
       ...tenderData,
       personName,
+      personPhone,
       customerId: user?.id,
     });
 

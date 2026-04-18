@@ -27,6 +27,9 @@ export class Tender {
   @Column({ name: "tend_person_name", type: "varchar", length: 150 })
   personName!: string;
 
+  @Column({ name: "tend_person_phone", type: "varchar", length: 15 })
+  personPhone!: string;
+
   @Column({ name: "tend_customer_id" })
   customerId!: number;
 
