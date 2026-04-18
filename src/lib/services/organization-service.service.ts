@@ -15,13 +15,29 @@ export class OrganizationServiceLinkService {
     };
   }
 
+  private static async enrichWithSectorNames(
+    dtos: OrganizationServiceDTO[],
+  ): Promise<OrganizationServiceDTO[]> {
+    const services = dtos
+      .map((d) => d.service)
+      .filter((s): s is NonNullable<typeof s> => s != null);
+    if (services.length === 0) return dtos;
+    const enriched = await ServiceService.attachBusinessSectorNames(services);
+    const byId = new Map(enriched.map((s) => [s.id, s]));
+    return dtos.map((d) => ({
+      ...d,
+      service: d.service ? (byId.get(d.service.id) ?? d.service) : null,
+    }));
+  }
+
   static async getById(
     id: number,
     relations: ("organization" | "service")[] = [],
   ): Promise<OrganizationServiceDTO | null> {
     const row = await OrganizationServiceRepository.findOneBy({ id }, relations);
     if (!row) return null;
-    return this.serialize(row);
+    const [dto] = await this.enrichWithSectorNames([this.serialize(row)]);
+    return dto;
   }
 
   static async getByOrganization(
@@ -32,7 +48,8 @@ export class OrganizationServiceLinkService {
       { organizationId },
       relations,
     );
-    return rows.map((r) => this.serialize(r));
+    const dtos = rows.map((r) => this.serialize(r));
+    return this.enrichWithSectorNames(dtos);
   }
 
   static async getByService(
@@ -43,7 +60,8 @@ export class OrganizationServiceLinkService {
       { serviceId },
       relations,
     );
-    return rows.map((r) => this.serialize(r));
+    const dtos = rows.map((r) => this.serialize(r));
+    return this.enrichWithSectorNames(dtos);
   }
 
   static async addServiceToOrganization(
@@ -54,7 +72,13 @@ export class OrganizationServiceLinkService {
       organizationId,
       serviceId,
     });
-    return this.serialize(row);
+    const full = await OrganizationServiceRepository.findOneBy(
+      { id: row.id },
+      ["service"],
+    );
+    if (!full) return this.serialize(row);
+    const [dto] = await this.enrichWithSectorNames([this.serialize(full)]);
+    return dto;
   }
 
   static async removeServiceFromOrganization(id: number): Promise<void> {

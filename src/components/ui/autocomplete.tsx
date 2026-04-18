@@ -11,6 +11,20 @@ export interface AutocompleteOption<
   value: TValue;
 }
 
+/**
+ * Groups options under a heading (e.g. services by business sector).
+ * Use either `groups` or flat `options`, not both as the primary source.
+ */
+export interface AutocompleteOptionGroup<
+  TValue extends string | number = string | number,
+> {
+  /** Stable id for React keys (e.g. sector id or slug) */
+  id: string;
+  /** Group heading shown above its options */
+  label: string;
+  options: AutocompleteOption<TValue>[];
+}
+
 export type AutocompleteCommitPayload<
   TValue extends string | number = string | number,
 > = {
@@ -23,7 +37,12 @@ export type AutocompleteCommitPayload<
 export interface AutocompleteProps<
   TValue extends string | number = string | number,
 > extends Omit<React.ComponentProps<typeof Input>, "onChange" | "value"> {
-  options: AutocompleteOption<TValue>[];
+  /** Flat list; used when `groups` is omitted or empty. */
+  options?: AutocompleteOption<TValue>[];
+  /**
+   * Grouped list; when non-empty, drives the dropdown (sector headings + options).
+   */
+  groups?: AutocompleteOptionGroup<TValue>[];
   /** Option values to hide (e.g. already selected ids) */
   exclude?: TValue[];
   value: string;
@@ -32,10 +51,22 @@ export interface AutocompleteProps<
   emptyMessage?: string;
 }
 
+function filterOption<TValue extends string | number>(
+  opt: AutocompleteOption<TValue>,
+  q: string,
+  excludeSet: Set<string>,
+): boolean {
+  return (
+    !excludeSet.has(String(opt.value)) &&
+    (q === "" || opt.label.toLowerCase().includes(q))
+  );
+}
+
 export function Autocomplete<
   TValue extends string | number = string | number,
 >({
-  options,
+  options = [],
+  groups,
   exclude = [],
   value,
   onValueChange,
@@ -56,14 +87,30 @@ export function Autocomplete<
     [exclude],
   );
 
-  const filtered = React.useMemo(() => {
+  const useGrouped = Boolean(groups && groups.length > 0);
+
+  const filteredGroups = React.useMemo(() => {
+    if (!useGrouped || !groups) return null;
     const q = value.trim().toLowerCase();
-    return options.filter(
-      (opt) =>
-        !excludeSet.has(String(opt.value)) &&
-        (q === "" || opt.label.toLowerCase().includes(q)),
-    );
+    return groups
+      .map((g) => ({
+        ...g,
+        options: g.options.filter((opt) => filterOption(opt, q, excludeSet)),
+      }))
+      .filter((g) => g.options.length > 0);
+  }, [useGrouped, groups, excludeSet, value]);
+
+  const filteredFlat = React.useMemo(() => {
+    const q = value.trim().toLowerCase();
+    return options.filter((opt) => filterOption(opt, q, excludeSet));
   }, [options, excludeSet, value]);
+
+  const flatSelectable = React.useMemo(() => {
+    if (filteredGroups) {
+      return filteredGroups.flatMap((g) => g.options);
+    }
+    return filteredFlat;
+  }, [filteredGroups, filteredFlat]);
 
   React.useEffect(() => {
     const onDoc = (e: MouseEvent) => {
@@ -77,7 +124,7 @@ export function Autocomplete<
 
   React.useEffect(() => {
     setHighlighted(0);
-  }, [value, open]);
+  }, [value, open, flatSelectable.length, useGrouped]);
 
   const commitOption = (opt: AutocompleteOption<TValue>) => {
     onCommit({ label: opt.label, value: opt.value });
@@ -101,8 +148,8 @@ export function Autocomplete<
     }
     if (e.key === "Enter") {
       e.preventDefault();
-      if (filtered.length > 0) {
-        const opt = filtered[highlighted] ?? filtered[0];
+      if (flatSelectable.length > 0) {
+        const opt = flatSelectable[highlighted] ?? flatSelectable[0];
         commitOption(opt);
       } else if (value.trim()) {
         commitCustomLabel(value);
@@ -113,7 +160,9 @@ export function Autocomplete<
 
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setHighlighted((i) => Math.min(i + 1, Math.max(filtered.length - 1, 0)));
+      setHighlighted((i) =>
+        Math.min(i + 1, Math.max(flatSelectable.length - 1, 0)),
+      );
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setHighlighted((i) => Math.max(i - 1, 0));
@@ -121,6 +170,8 @@ export function Autocomplete<
       setOpen(false);
     }
   };
+
+  const listEmpty = flatSelectable.length === 0;
 
   return (
     <div ref={containerRef} className={cn("relative w-full min-w-48", className)}>
@@ -146,12 +197,49 @@ export function Autocomplete<
           role="listbox"
           className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md"
         >
-          {filtered.length === 0 ? (
+          {listEmpty ? (
             <li className="px-3 py-2 text-sm text-muted-foreground">
               {emptyMessage}
             </li>
+          ) : filteredGroups ? (
+            <>
+              {(() => {
+                let flatIndex = 0;
+                return filteredGroups.map((group) => (
+                  <React.Fragment key={group.id}>
+                    <li
+                      role="presentation"
+                      className="pointer-events-none border-b border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground first:border-t-0"
+                    >
+                      {group.label}
+                    </li>
+                    {group.options.map((opt) => {
+                      const i = flatIndex;
+                      flatIndex += 1;
+                      return (
+                        <li
+                          key={`${group.id}-${String(opt.value)}`}
+                          role="option"
+                          aria-selected={i === highlighted}
+                          className={cn(
+                            "cursor-pointer px-3 py-2 text-sm",
+                            i === highlighted &&
+                              "bg-accent text-accent-foreground",
+                          )}
+                          onMouseEnter={() => setHighlighted(i)}
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => commitOption(opt)}
+                        >
+                          {opt.label}
+                        </li>
+                      );
+                    })}
+                  </React.Fragment>
+                ));
+              })()}
+            </>
           ) : (
-            filtered.map((opt, i) => (
+            filteredFlat.map((opt, i) => (
               <li
                 key={`${String(opt.value)}-${opt.label}`}
                 role="option"

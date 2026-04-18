@@ -1,4 +1,5 @@
 import { ServiceRepository } from "@/src/lib/repositories/Service.repo";
+import { getDataSource } from "@/src/lib/db/connection";
 import type { SearchService } from "@/src/lib/enums/service.enum";
 import { Service } from "@/src/lib/entities/Service.entity";
 import type {
@@ -26,6 +27,23 @@ export class ServiceService {
     };
   }
 
+  static async attachBusinessSectorNames(
+    services: ServiceDTO[],
+  ): Promise<ServiceDTO[]> {
+    if (services.length === 0) return services;
+    const ids = [...new Set(services.map((s) => s.businessSectorId))];
+    const ds = await getDataSource();
+    const rows = (await ds.query(
+      `SELECT bussec_id, bussec_name FROM bussines_sector WHERE bussec_id IN (${ids.map(() => "?").join(", ")})`,
+      ids,
+    )) as { bussec_id: number; bussec_name: string }[];
+    const map = new Map(rows.map((r) => [r.bussec_id, r.bussec_name]));
+    return services.map((s) => ({
+      ...s,
+      businessSectorName: map.get(s.businessSectorId) ?? null,
+    }));
+  }
+
   static async getById(
     id: number,
     select?: (keyof Service)[],
@@ -40,7 +58,8 @@ export class ServiceService {
     select?: (keyof Service)[],
   ): Promise<ServiceDTO[]> {
     const rows = await ServiceRepository.findBy(searchParams, select);
-    return rows.map((r) => this.serialize(r));
+    const dtos = rows.map((r) => this.serialize(r));
+    return this.attachBusinessSectorNames(dtos);
   }
 
   static async findAll(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ClipboardList } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
@@ -9,13 +9,19 @@ import { Label } from "@/src/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
 import { Textarea } from "@/src/components/ui/textarea";
 import { _createTenderFromPublicSiteAction } from "@/src/lib/actions/tender.actions";
-import { _getServiceQuestionSet } from "@/src/lib/actions/services.actions";
+import {
+  _getServiceQuestionSet,
+  _getServicesFromPublicSite,
+} from "@/src/lib/actions/services.actions";
+import type { ServiceDTO } from "@/src/lib/dtos/Services.dto";
 import { QuestionSetClientDTO } from "@/src/lib/dtos/QuestionSets.dto";
 import {
   CreateTenderFromPublicSiteDTO,
@@ -61,6 +67,8 @@ export function CustomerRequestForm({
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingQuestionSet, setIsFetchingQuestionSet] = useState(false);
   const [selectedService, setSelectedService] = useState("");
+  const [publicServices, setPublicServices] = useState<ServiceDTO[]>([]);
+  const [publicServicesLoading, setPublicServicesLoading] = useState(true);
   const [serviceQuestionSet, setServiceQuestionSet] = useState<QuestionSetClientDTO | null>(null);
   const [detailAnswers, setDetailAnswers] = useState<Record<string, string>>({});
   const activeQuestions = serviceQuestionSet?.questions ?? [];
@@ -68,6 +76,40 @@ export function CustomerRequestForm({
   const setDetailAnswer = (id: string, value: string) => {
     setDetailAnswers((prev) => ({ ...prev, [id]: value }));
   };
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const result = await _getServicesFromPublicSite();
+      if (cancelled) return;
+      setPublicServicesLoading(false);
+      if (result.success && result.data) {
+        setPublicServices(result.data);
+      } else if (!result.success) {
+        toast.error(result.error ?? "No se pudieron cargar los servicios.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const servicesBySector = useMemo(() => {
+    const bySector = new Map<string, ServiceDTO[]>();
+    for (const s of publicServices) {
+      const sector = s.businessSectorName?.trim() || "Sin sector";
+      if (!bySector.has(sector)) bySector.set(sector, []);
+      bySector.get(sector)!.push(s);
+    }
+    return Array.from(bySector.entries())
+      .sort(([a], [b]) => a.localeCompare(b, "es"))
+      .map(([label, list]) => ({
+        label,
+        services: [...list].sort((x, y) =>
+          x.name.localeCompare(y.name, "es"),
+        ),
+      }));
+  }, [publicServices]);
 
   const validateStep0 = (): boolean => {
     const form = document.getElementById("customer-request-form") as HTMLFormElement | null;
@@ -288,6 +330,7 @@ export function CustomerRequestForm({
               required
               value={selectedService}
               onValueChange={setSelectedService}
+              disabled={publicServicesLoading || publicServices.length === 0}
               onOpenChange={(open) => {
                 if (open) onOpenMapPicker();
               }}
@@ -297,17 +340,31 @@ export function CustomerRequestForm({
                 className={cn("h-11 w-full", inputSurface)}
                 onFocus={onOpenMapPicker}
               >
-                <SelectValue placeholder="Selecciona un servicio" />
+                <SelectValue
+                  placeholder={
+                    publicServicesLoading
+                      ? "Cargando servicios…"
+                      : publicServices.length === 0
+                        ? "No hay servicios disponibles"
+                        : "Selecciona un servicio"
+                  }
+                />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="1">Aires Acondicionados</SelectItem>
-                <SelectItem value="2">Plomería</SelectItem>
-                <SelectItem value="3">Electricidad</SelectItem>
-                <SelectItem value="4">Pintura</SelectItem>
-                <SelectItem value="5">Limpieza</SelectItem>
-                <SelectItem value="6">Carpintería</SelectItem>
-                <SelectItem value="7">Jardinería</SelectItem>
-                <SelectItem value="8">Otro</SelectItem>
+              <SelectContent
+                searchable
+                searchPlaceholder="Buscar servicio o sector…"
+                position="popper"
+              >
+                {servicesBySector.map((group) => (
+                  <SelectGroup key={group.label}>
+                    <SelectLabel>{group.label}</SelectLabel>
+                    {group.services.map((svc) => (
+                      <SelectItem key={svc.id} value={String(svc.id)}>
+                        {svc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
               </SelectContent>
             </Select>
           </div>

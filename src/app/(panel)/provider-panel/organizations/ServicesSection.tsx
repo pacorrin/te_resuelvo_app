@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Plus, X } from "lucide-react";
 import {
   Card,
@@ -78,10 +78,7 @@ export function ServicesSection({
         payload.value,
       );
       if (result.success && result.service) {
-        setOrganizationServices((prev) => [
-          ...prev,
-          { ...result.service, service: svc },
-        ]);
+        setOrganizationServices((prev) => [...prev, result.service!]);
         setServiceName("");
       } else {
         toast.error(result.error ?? "No se pudo asignar el servicio.");
@@ -118,10 +115,24 @@ export function ServicesSection({
     }
   };
 
-  const options = searchResults.map((s) => ({
-    label: s.name,
-    value: s.id,
-  }));
+  const groupedOptions = useMemo(() => {
+    const bySector = new Map<string, ServiceDTO[]>();
+    for (const s of searchResults) {
+      const sector = s.businessSectorName?.trim() || "Sin sector";
+      if (!bySector.has(sector)) bySector.set(sector, []);
+      bySector.get(sector)!.push(s);
+    }
+    return Array.from(bySector.entries())
+      .sort(([a], [b]) => a.localeCompare(b, "es"))
+      .map(([label, services]) => ({
+        id: `sector-${label}`,
+        label,
+        options: services.map((svc) => ({
+          label: svc.name,
+          value: svc.id,
+        })),
+      }));
+  }, [searchResults]);
 
   const excludeIds = organizationServices.map((l) => l.serviceId);
 
@@ -137,7 +148,7 @@ export function ServicesSection({
         <div className="flex min-w-[min(100%,16rem)] flex-1 items-center gap-1 mb-4">
           <Autocomplete<number>
             className="min-w-0 flex-1"
-            options={options}
+            groups={groupedOptions}
             exclude={excludeIds}
             value={serviceName}
             onValueChange={searchServices}
@@ -156,7 +167,7 @@ export function ServicesSection({
               variant="secondary"
               className="text-sm px-3 py-1"
             >
-              {link.service?.name}
+              {`${(link.service?.businessSectorName?.trim() || "Sin sector")} - ${link.service?.name ?? "—"}`}
               <Button
                 variant="ghost"
                 size="icon"

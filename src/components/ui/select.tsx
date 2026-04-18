@@ -1,10 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import {
+  CheckIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  SearchIcon,
+} from "lucide-react";
 import { Select as SelectPrimitive } from "radix-ui";
 
 import { cn } from "@/src/lib/utils";
+
+function getTextFromNode(node: React.ReactNode): string {
+  if (node == null || typeof node === "boolean") return "";
+  if (typeof node === "string" || typeof node === "number") return String(node);
+  if (Array.isArray(node)) return node.map(getTextFromNode).join(" ");
+  if (React.isValidElement(node)) {
+    const p = node.props as { children?: React.ReactNode };
+    if (p.children != null) return getTextFromNode(p.children);
+  }
+  return "";
+}
 
 function Select({
   ...props
@@ -50,43 +66,6 @@ function SelectTrigger({
   );
 }
 
-function SelectContent({
-  className,
-  children,
-  position = "item-aligned",
-  align = "center",
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Content>) {
-  return (
-    <SelectPrimitive.Portal>
-      <SelectPrimitive.Content
-        data-slot="select-content"
-        className={cn(
-          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem] origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border shadow-md",
-          position === "popper" &&
-            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-          className,
-        )}
-        position={position}
-        align={align}
-        {...props}
-      >
-        <SelectScrollUpButton />
-        <SelectPrimitive.Viewport
-          className={cn(
-            "p-1",
-            position === "popper" &&
-              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
-          )}
-        >
-          {children}
-        </SelectPrimitive.Viewport>
-        <SelectScrollDownButton />
-      </SelectPrimitive.Content>
-    </SelectPrimitive.Portal>
-  );
-}
-
 function SelectLabel({
   className,
   ...props
@@ -124,6 +103,224 @@ function SelectItem({
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
+  );
+}
+
+function filterSelectChildren(
+  children: React.ReactNode,
+  query: string,
+  SelectGroupImpl: typeof SelectGroup,
+  SelectLabelImpl: typeof SelectLabel,
+  SelectItemImpl: typeof SelectItem,
+): React.ReactNode {
+  const q = query.trim().toLowerCase();
+  if (!q) return children;
+
+  const list = React.Children.toArray(children);
+  const out: React.ReactNode[] = [];
+
+  for (const child of list) {
+    if (!React.isValidElement(child)) continue;
+
+    if (child.type === SelectGroupImpl) {
+      const gc = React.Children.toArray(
+        (child.props as { children?: React.ReactNode }).children,
+      );
+      const labelEl = gc.find(
+        (c) => React.isValidElement(c) && c.type === SelectLabelImpl,
+      ) as React.ReactElement | undefined;
+      const labelText = labelEl
+        ? getTextFromNode(
+            (labelEl.props as { children?: React.ReactNode }).children,
+          )
+        : "";
+      const labelMatches = labelText.toLowerCase().includes(q);
+      const items = gc.filter(
+        (c) => React.isValidElement(c) && c.type === SelectItemImpl,
+      ) as React.ReactElement[];
+      const kept = items.filter((item) => {
+        const ip = item.props as { children?: React.ReactNode; value?: string };
+        const itemText = getTextFromNode(ip.children);
+        const valueStr = String(ip.value ?? "").toLowerCase();
+        return (
+          labelMatches ||
+          itemText.toLowerCase().includes(q) ||
+          valueStr.includes(q)
+        );
+      });
+      if (kept.length > 0) {
+        out.push(
+          React.cloneElement(child, { key: child.key }, [
+            ...(labelEl ? [labelEl] : []),
+            ...kept,
+          ]),
+        );
+      }
+    } else if (child.type === SelectItemImpl) {
+      const itemText = getTextFromNode(
+        (child.props as { children?: React.ReactNode }).children,
+      );
+      const valueStr = String(
+        (child.props as { value: string }).value ?? "",
+      ).toLowerCase();
+      if (itemText.toLowerCase().includes(q) || valueStr.includes(q)) {
+        out.push(child);
+      }
+    } else {
+      out.push(child);
+    }
+  }
+
+  return <>{out}</>;
+}
+
+function countSelectItems(
+  node: React.ReactNode,
+  SelectItemImpl: typeof SelectItem,
+): number {
+  let n = 0;
+  const walk = (el: React.ReactNode) => {
+    React.Children.forEach(el, (c) => {
+      if (!React.isValidElement(c)) return;
+      if (c.type === SelectItemImpl) n += 1;
+      else {
+        const p = c.props as { children?: React.ReactNode };
+        if (p.children != null) walk(p.children);
+      }
+    });
+  };
+  walk(node);
+  return n;
+}
+
+type RadixSelectContentProps = React.ComponentPropsWithoutRef<
+  typeof SelectPrimitive.Content
+>;
+
+export type SelectContentProps = RadixSelectContentProps & {
+  searchable?: boolean;
+  searchPlaceholder?: string;
+};
+
+/** Radix typings omit searchable layout and some focus props; runtime matches. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Radix Select.Content overloads omit our props
+const RadixSelectContent = SelectPrimitive.Content as any;
+
+function SelectContent({
+  className,
+  children,
+  position = "item-aligned",
+  align = "center",
+  searchable = false,
+  searchPlaceholder = "Buscar…",
+  ...props
+}: SelectContentProps) {
+  /** Radix Select v2 Content does not consume onOpenAutoFocus (it lands on the listbox div → React 19 warning). */
+  const rest = props as RadixSelectContentProps & {
+    onCloseAutoFocus?: (e: Event) => void;
+    onOpenAutoFocus?: (e: Event) => void;
+  };
+  const { onCloseAutoFocus, onOpenAutoFocus: _omitOpenAutoFocus, ...radixRest } =
+    rest;
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useLayoutEffect(() => {
+    if (!searchable) return;
+    const id = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => searchInputRef.current?.focus());
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [searchable]);
+
+  const filteredChildren = React.useMemo(
+    () =>
+      searchable && searchQuery.trim()
+        ? filterSelectChildren(
+            children,
+            searchQuery,
+            SelectGroup,
+            SelectLabel,
+            SelectItem,
+          )
+        : children,
+    [children, searchQuery, searchable],
+  );
+
+  const visibleCount = React.useMemo(
+    () => countSelectItems(filteredChildren, SelectItem),
+    [filteredChildren],
+  );
+
+  const showEmpty =
+    searchable && searchQuery.trim().length > 0 && visibleCount === 0;
+
+  const viewportInner = showEmpty ? (
+    <div className="text-muted-foreground py-6 text-center text-sm">
+      Sin coincidencias
+    </div>
+  ) : (
+    filteredChildren
+  );
+
+  return (
+    <SelectPrimitive.Portal>
+      <RadixSelectContent
+        {...(radixRest as RadixSelectContentProps)}
+        data-slot="select-content"
+        className={cn(
+          "bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 relative z-50 min-w-[8rem] origin-(--radix-select-content-transform-origin) rounded-md border shadow-md",
+          searchable
+            ? "flex max-h-[min(24rem,var(--radix-select-content-available-height))] flex-col overflow-hidden p-0"
+            : "max-h-(--radix-select-content-available-height) overflow-x-hidden overflow-y-auto",
+          position === "popper" &&
+            "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
+          className,
+        )}
+        position={position}
+        align={align}
+        onCloseAutoFocus={(e: Event) => {
+          if (searchable) setSearchQuery("");
+          onCloseAutoFocus?.(e);
+        }}
+      >
+        <SelectScrollUpButton />
+        {searchable ? (
+          <div className="border-border bg-popover sticky top-0 z-10 border-b px-2 py-2">
+            <div className="relative">
+              <SearchIcon className="text-muted-foreground pointer-events-none absolute top-1/2 left-2 size-4 -translate-y-1/2" />
+              <input
+                ref={searchInputRef}
+                type="search"
+                role="searchbox"
+                placeholder={searchPlaceholder}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                className="border-input bg-background placeholder:text-muted-foreground h-9 w-full rounded-md border pr-3 pl-8 text-sm shadow-xs outline-none focus-visible:ring-[2px] focus-visible:ring-ring"
+                aria-label={searchPlaceholder}
+              />
+            </div>
+          </div>
+        ) : null}
+        <SelectPrimitive.Viewport
+          className={cn(
+            "p-1",
+            !searchable &&
+              position === "popper" &&
+              "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)] scroll-my-1",
+            searchable &&
+              "max-h-[min(18rem,calc(var(--radix-select-content-available-height)-3.25rem))] flex-1 overflow-y-auto overflow-x-hidden",
+            searchable &&
+              position === "popper" &&
+              "min-h-0 w-full min-w-[var(--radix-select-trigger-width)]",
+          )}
+        >
+          {viewportInner}
+        </SelectPrimitive.Viewport>
+        <SelectScrollDownButton />
+      </RadixSelectContent>
+    </SelectPrimitive.Portal>
   );
 }
 

@@ -6,7 +6,19 @@ import { protectedAction } from "../protected-action";
 import { QuestionSetService } from "../services/question-set.service";
 import { ServiceService } from "../services/service.service";
 import { ActionResponse } from "../utils/action-response";
+import { getErrorMessage } from "../utils/error";
 
+export async function _getServicesFromPublicSite(): Promise<
+  ActionResponse<ServiceDTO[]>
+> {
+  try {
+    const services = await ServiceService.findBy({});
+    return { success: true, data: services };
+  } catch (error) {
+    console.error("Error loading services for public site:", error);
+    return { success: false, error: getErrorMessage(error) };
+  }
+}
 
 export const _findServices = protectedAction(
   async (_, searchParams: SearchService = {}): Promise<ActionResponse<ServiceDTO[]>> => {
