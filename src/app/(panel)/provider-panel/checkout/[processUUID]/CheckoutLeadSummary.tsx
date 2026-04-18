@@ -30,12 +30,14 @@ export default function CheckoutLeadSummary({
 }: CheckoutLeadSummaryProps) {
   const formattedPrice =
     Number.isFinite(lead.price) && lead.price >= 0
-      ? new Intl.NumberFormat("es-MX", {
+      ? `${new Intl.NumberFormat("en-US", {
           style: "currency",
-          currency: "MXN",
+          currency: "USD",
           maximumFractionDigits: 0,
-        }).format(lead.price)
-      : `$${lead.price}`;
+        }).format(lead.price)} USD`
+      : `$${lead.price} USD`;
+ 
+ 
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-linear-to-b from-zinc-50 to-white p-4 shadow-sm dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-950">

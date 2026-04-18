@@ -84,15 +84,15 @@ export default async function Content() {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Plomería</span>
-                  <span className="font-semibold">$150</span>
+                  <span className="font-semibold">$15 USD</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Electricidad</span>
-                  <span className="font-semibold">$150</span>
+                  <span className="font-semibold">$15 USD</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Pintura</span>
-                  <span className="font-semibold">$120</span>
+                  <span className="font-semibold">$12 USD</span>
                 </div>
               </div>
               <Separator className="mb-4" />

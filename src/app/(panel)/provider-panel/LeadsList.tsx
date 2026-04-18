@@ -73,11 +73,15 @@ function tenderToLeadItem(tender: TenderClientListDTO): LeadListItemData {
       ? `${tender.description.slice(0, 69)}…`
       : tender.description;
 
-  console.log("tender.createdAt", tender.createdAt);
   return {
-    id: String(tender.id),
+    id: tender.id,
     service: title,
-    client: tender.personName,
+    serviceType: tender.service?.name ?? "—",
+    customer: {
+      name: tender.personName,
+      email: tender.customer?.email ?? "—",
+      phone: tender.customer?.phone ?? "—",
+    },
     phone: tender.customer?.phone ?? "—",
     location: 'CP ' + tender.zipcode?.trim() || "—",
     date: formatRelativeEs(new Date(tender.createdAt)),

@@ -36,7 +36,7 @@ export class StripeService {
             product_data: {
               name: `Lead - ${tenderBuyer.tender.service.name}`,
             },
-            unit_amount: Math.round(Number((tenderBuyer.tender.service.leadPrice * 100 / 18).toFixed(2))),
+            unit_amount: tenderBuyer.tender.service.leadPrice * 100,
           },
           quantity: 1,
         },
