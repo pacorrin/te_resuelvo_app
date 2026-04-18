@@ -1,0 +1,8 @@
+1.	App Router file structure (layout, page, nested routes)
+	2.	Server vs Client Components (y el “use client”)
+	3.	Fetch + caching (no-store, revalidate)
+	4.	generateMetadata() por ruta
+	5.	Dynamic routes [slug]
+	6.	generateStaticParams() para pre-render
+	7.	Manejo de notFound() y loading.tsx (UX y SEO decente)
+	8.	robots.txt + sitemap + noindex para panel
