@@ -14,6 +14,7 @@ import { Badge } from "@/src/components/ui/badge";
 import { Separator } from "@/src/components/ui/separator";
 import type { LeadListItemData } from "@/src/app/(panel)/provider-panel/LeadListItemCompact";
 import { getTenderNumber } from "@/src/lib/utils/tender.utils";
+import type { TenderQuestionAnswerRow } from "./checkout-view";
 
 export type CheckoutLeadSummaryProps = {
   lead: LeadListItemData;
@@ -22,11 +23,13 @@ export type CheckoutLeadSummaryProps = {
     email: string;
     phone: string;
   };
+  tenderQuestionAnswers: TenderQuestionAnswerRow[];
 };
 
 export default function CheckoutLeadSummary({
   lead,
   customer,
+  tenderQuestionAnswers,
 }: CheckoutLeadSummaryProps) {
   const formattedPrice =
     Number.isFinite(lead.price) && lead.price >= 0
@@ -36,8 +39,6 @@ export default function CheckoutLeadSummary({
           maximumFractionDigits: 0,
         }).format(lead.price)} USD`
       : `$${lead.price} USD`;
- 
- 
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-linear-to-b from-zinc-50 to-white p-4 shadow-sm dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-950">
@@ -85,6 +86,30 @@ export default function CheckoutLeadSummary({
           </div>
         </div>
 
+        <div className="flex flex-col gap-2">
+          {tenderQuestionAnswers.length > 0 ? (
+            <div className="space-y-2">
+              <Separator className="mb-4 bg-zinc-200 dark:bg-zinc-700" />
+       
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Detalles adicionales
+              </p>
+              <dl className="space-y-2 text-sm">
+                {tenderQuestionAnswers.map((row, idx) => (
+                  <div key={`qa-${idx}`}>
+                    <dt className="font-medium text-zinc-700 dark:text-zinc-200">
+                      {row.questionText}
+                    </dt>
+                    <dd className="text-zinc-600 dark:text-zinc-300">
+                      {row.answer}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          ) : null}
+        </div>
+
         <Separator className="bg-zinc-200 dark:bg-zinc-800" />
 
         <div className="grid gap-3 sm:grid-cols-1">
@@ -100,7 +125,6 @@ export default function CheckoutLeadSummary({
                 {customer.name
                   ? customer.name.slice(0, 4).padEnd(customer.name.length, "*")
                   : ""}
-           
               </p>
             </div>
           </div>
@@ -114,7 +138,11 @@ export default function CheckoutLeadSummary({
                 Teléfono
               </p>
               <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                {customer.phone ? customer.phone.slice(0, 3).padEnd(customer.phone.length, "*") : "—"}
+                {customer.phone
+                  ? customer.phone
+                      .slice(0, 3)
+                      .padEnd(customer.phone.length, "*")
+                  : "—"}
               </p>
             </div>
           </div>

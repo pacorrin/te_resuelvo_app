@@ -74,7 +74,11 @@ export default function CheckoutContent({
             <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
           )}
           {!error && leadData && tenderBuyer && (
-            <CheckoutLeadSummary lead={leadData} customer={leadData.customer} />
+            <CheckoutLeadSummary
+              lead={leadData}
+              customer={leadData.customer}
+              tenderQuestionAnswers={tenderBuyer.tenderQuestionAnswers}
+            />
           )}
         <div className="mb-4 rounded-lg bg-blue-50 border border-blue-200 p-4 flex items-start gap-3 dark:bg-blue-950/30 dark:border-blue-900/40">
           <div>

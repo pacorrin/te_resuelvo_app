@@ -186,32 +186,6 @@ export function CustomerRequestForm({
     onActiveStepChange(1);
   };
 
-  const buildDescriptionWithAnswers = (baseDescription: string): string => {
-    const lines = activeQuestions.map((q) => {
-      const key = String(q.id);
-      const value = detailAnswers[key];
-      if (value === undefined || value === "") return null;
-
-      if (q.questionType === QuestionType.MULTIPLE_CHOICE) {
-        const arr = parseMultiAnswer(value);
-        if (arr.length === 0) return null;
-        return `${q.questionText}: ${arr.join(", ")}`;
-      }
-      if (q.questionType === QuestionType.SINGLE_CHOICE) {
-        if (!value.trim()) return null;
-        const opt = q.options?.find((o) => o === value);
-        return `${q.questionText}: ${opt ?? value}`;
-      }
-      if (!value.trim()) return null;
-      return `${q.questionText}: ${value}`;
-    }).filter(Boolean) as string[];
-
-    if (lines.length === 0) return baseDescription.trim();
-    const block = lines.join("\n");
-    const trimmed = baseDescription.trim();
-    return trimmed ? `${trimmed}\n\n— Detalles —\n${block}` : `— Detalles —\n${block}`;
-  };
-
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -271,7 +245,7 @@ export function CustomerRequestForm({
       tenderAddress: addressLine.trim(),
       zipcode: postalCode.trim(),
       tenderAddressReference: formData.get("address-reference") as string,
-      description: buildDescriptionWithAnswers(rawDescription),
+      description: rawDescription.trim(),
       latitude: selectedLocation?.lat.toString() || "",
       longitude: selectedLocation?.lng.toString() || "",
       questionSetAnswers,

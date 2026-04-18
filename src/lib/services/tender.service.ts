@@ -9,7 +9,10 @@ import {
 import { Tender } from "../entities/Tender.entity";
 import { UserService } from "./user.service";
 import { OrganizationCoverageAreaService } from "./organization-coverage-area.service";
-import { QuestionSetAnswerService } from "./question-set-answer.service";
+import {
+  QuestionSetAnswerService,
+  QUESTION_SET_ANSWER_ENTITY_TENDER,
+} from "./question-set-answer.service";
 
 export class TenderService {
   static serializeTenderClientList(tender: Tender): TenderClientListDTO {
@@ -96,7 +99,7 @@ export class TenderService {
             questionSetId: row.questionSetId,
             questionId: row.questionId,
             answer: row.answer,
-            entity: "tender",
+            entity: QUESTION_SET_ANSWER_ENTITY_TENDER,
             entityId: tender.id,
           }),
         ),

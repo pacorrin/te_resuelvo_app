@@ -5,6 +5,10 @@ import {
   UpdateQuestionSetAnswerDTO,
 } from "../dtos/QuestionSetAnswers.dto";
 import { QuestionSetAnswer } from "../entities/QuestionSetAnswer.entity";
+import { QuestionService } from "./question.service";
+
+/** Stored in `quesa_entity` when the answer belongs to a tender purchase / lead. */
+export const QUESTION_SET_ANSWER_ENTITY_TENDER = "tender";
 
 export class QuestionSetAnswerService {
   static async getById(id: number): Promise<QuestionSetAnswer | null> {
@@ -29,5 +33,34 @@ export class QuestionSetAnswerService {
     data: UpdateQuestionSetAnswerDTO,
   ): Promise<QuestionSetAnswer> {
     return QuestionSetAnswerRepository.updateQuestionSetAnswer(id, data);
+  }
+
+  static async findByTenderId(tenderId: number): Promise<QuestionSetAnswer[]> {
+    return QuestionSetAnswerRepository.findAll({
+      relatedEntity: QUESTION_SET_ANSWER_ENTITY_TENDER,
+      relatedEntityId: tenderId,
+    });
+  }
+
+  /** Answers for checkout / lead summary: question copy + stored answer text. */
+  static async getTenderAnswerRows(
+    tenderId: number,
+  ): Promise<{ questionText: string; answer: string }[]> {
+    const answers = await this.findByTenderId(tenderId);
+    if (answers.length === 0) return [];
+
+    const questionIds = [...new Set(answers.map((a) => a.questionId))];
+    const questions = await Promise.all(
+      questionIds.map((id) => QuestionService.getById(id)),
+    );
+    const byId = new Map(
+      questions.filter(Boolean).map((q) => [q!.id, q!]),
+    );
+
+    return answers.map((a) => ({
+      questionText:
+        byId.get(a.questionId)?.questionText?.trim() || "Pregunta",
+      answer: a.answer.trim(),
+    }));
   }
 }

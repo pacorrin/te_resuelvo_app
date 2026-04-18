@@ -1,3 +1,8 @@
+export type TenderQuestionAnswerRow = {
+  questionText: string;
+  answer: string;
+};
+
 export type CheckoutTenderBuyerView = {
   organizationId: number;
   tender: {
@@ -13,4 +18,5 @@ export type CheckoutTenderBuyerView = {
     email: string;
     phone: string | null;
   };
+  tenderQuestionAnswers: TenderQuestionAnswerRow[];
 };

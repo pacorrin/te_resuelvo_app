@@ -1,5 +1,6 @@
 import { PanelPage } from "@/src/components/PanelPage";
 import { TenderBuyerService } from "@/src/lib/services/tender-buyer.service";
+import { QuestionSetAnswerService } from "@/src/lib/services/question-set-answer.service";
 import { getErrorMessage } from "@/src/lib/utils/error";
 import CheckoutContent from "./CheckoutContent";
 import type { CheckoutTenderBuyerView } from "./checkout-view";
@@ -18,6 +19,9 @@ export default async function CheckoutPage({
     const row = await TenderBuyerService.getTenderBuyerByProcessUuid(
       processUUID,
     );
+    const tenderQuestionAnswers =
+      await QuestionSetAnswerService.getTenderAnswerRows(row.tender.id);
+
     tenderBuyer = {
       organizationId: row.organizationId,
       tender: {
@@ -41,6 +45,7 @@ export default async function CheckoutPage({
         email: row.buyer.email,
         phone: row.buyer.phone ?? null,
       },
+      tenderQuestionAnswers,
     };
   } catch (error) {
     loadError = getErrorMessage(error);
