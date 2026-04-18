@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ClipboardList } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
+import { Checkbox } from "@/src/components/ui/checkbox";
 import { Input } from "@/src/components/ui/input";
 import { Label } from "@/src/components/ui/label";
 import {
@@ -23,6 +24,7 @@ import {
 } from "@/src/lib/actions/services.actions";
 import type { ServiceDTO } from "@/src/lib/dtos/Services.dto";
 import { QuestionSetClientDTO } from "@/src/lib/dtos/QuestionSets.dto";
+import { QuestionType } from "@/src/lib/enums/question.enum";
 import {
   CreateTenderFromPublicSiteDTO,
   type CreateTenderFromPublicSiteQuestionAnswerDTO,
@@ -34,6 +36,21 @@ import { cn } from "@/src/lib/utils";
 
 const inputSurface =
   "bg-muted/50 border-muted-foreground/10 shadow-none focus-visible:bg-background";
+
+/** Stored in `detailAnswers` for MULTIPLE_CHOICE questions (JSON stringified string[]). */
+function parseMultiAnswer(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return Array.isArray(v) ? v.map(String) : [];
+  } catch {
+    return [];
+  }
+}
+
+function stringifyMultiAnswer(selected: string[]): string {
+  return JSON.stringify(selected);
+}
 
 export const CUSTOMER_REQUEST_FORM_STEPS = [
   { label: "Tus datos", description: "Contacto, servicio, ubicación y descripción" },
@@ -173,9 +190,20 @@ export function CustomerRequestForm({
     const lines = activeQuestions.map((q) => {
       const key = String(q.id);
       const value = detailAnswers[key];
-      if (!value) return null;
-      const opt = q.options?.find((o) => o === value);
-      return `${q.questionText}: ${opt ?? value}`;
+      if (value === undefined || value === "") return null;
+
+      if (q.questionType === QuestionType.MULTIPLE_CHOICE) {
+        const arr = parseMultiAnswer(value);
+        if (arr.length === 0) return null;
+        return `${q.questionText}: ${arr.join(", ")}`;
+      }
+      if (q.questionType === QuestionType.SINGLE_CHOICE) {
+        if (!value.trim()) return null;
+        const opt = q.options?.find((o) => o === value);
+        return `${q.questionText}: ${opt ?? value}`;
+      }
+      if (!value.trim()) return null;
+      return `${q.questionText}: ${value}`;
     }).filter(Boolean) as string[];
 
     if (lines.length === 0) return baseDescription.trim();
@@ -188,7 +216,14 @@ export function CustomerRequestForm({
     e.preventDefault();
 
     for (const q of activeQuestions) {
-      if (q.required && !detailAnswers[String(q.id)]) {
+      if (!q.required) continue;
+      const raw = detailAnswers[String(q.id)];
+      if (q.questionType === QuestionType.MULTIPLE_CHOICE) {
+        if (parseMultiAnswer(raw).length === 0) {
+          toast.error(`Responde: ${q.questionText}`);
+          return;
+        }
+      } else if (!raw?.trim()) {
         toast.error(`Responde: ${q.questionText}`);
         return;
       }
@@ -209,7 +244,11 @@ export function CustomerRequestForm({
       serviceQuestionSet && activeQuestions.length > 0
         ? activeQuestions
             .map((q) => {
-              const answer = detailAnswers[String(q.id)]?.trim();
+              const raw = detailAnswers[String(q.id)];
+              const answer =
+                q.questionType === QuestionType.MULTIPLE_CHOICE
+                  ? parseMultiAnswer(raw).join(", ")
+                  : raw?.trim() ?? "";
               if (!answer) return null;
               return {
                 questionSetId: serviceQuestionSet.id,
@@ -440,41 +479,88 @@ export function CustomerRequestForm({
                   Este servicio no tiene preguntas adicionales.
                 </p>
               ) : null}
-              {activeQuestions.map((q) => (
-                <div key={q.id} className="space-y-2">
-                  <Label htmlFor={`hero-q-${q.id}`} className="text-xs font-semibold">
-                    {q.questionText}
-                  </Label>
-                  {q.options && q.options.length > 0 ? (
-                    <Select
-                      value={detailAnswers[String(q.id)] ?? ""}
-                      onValueChange={(v) => setDetailAnswer(String(q.id), v)}
-                    >
-                      <SelectTrigger
-                        id={`hero-q-${q.id}`}
-                        className={cn("h-11 w-full", inputSurface)}
-                      >
-                        <SelectValue placeholder="Selecciona una opción" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {q.options.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
+              {activeQuestions.map((q) => {
+                const qKey = String(q.id);
+                const opts = q.options ?? [];
+
+                if (q.questionType === QuestionType.MULTIPLE_CHOICE && opts.length > 0) {
+                  const selected = parseMultiAnswer(detailAnswers[qKey]);
+                  return (
+                    <fieldset key={q.id} className="space-y-2 border-0 p-0">
+                      <legend className="text-xs font-semibold">
+                        {q.questionText}
+                      </legend>
+                      <div className="flex flex-col gap-2.5 pt-1">
+                        {opts.map((opt, idx) => (
+                          <label
+                            key={`${q.id}-${idx}-${opt}`}
+                            htmlFor={`hero-q-${q.id}-${idx}`}
+                            className="flex cursor-pointer items-start gap-2.5 text-sm"
+                          >
+                            <Checkbox
+                              id={`hero-q-${q.id}-${idx}`}
+                              className="mt-0.5"
+                              checked={selected.includes(opt)}
+                              onCheckedChange={(checked) => {
+                                const cur = parseMultiAnswer(detailAnswers[qKey]);
+                                const next =
+                                  checked === true
+                                    ? [...cur.filter((x) => x !== opt), opt]
+                                    : cur.filter((x) => x !== opt);
+                                setDetailAnswer(qKey, stringifyMultiAnswer(next));
+                              }}
+                            />
+                            <span>{opt}</span>
+                          </label>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
+                      </div>
+                    </fieldset>
+                  );
+                }
+
+                if (q.questionType === QuestionType.SINGLE_CHOICE && opts.length > 0) {
+                  return (
+                    <div key={q.id} className="space-y-2">
+                      <Label htmlFor={`hero-q-${q.id}`} className="text-xs font-semibold">
+                        {q.questionText}
+                      </Label>
+                      <Select
+                        value={detailAnswers[qKey] ?? ""}
+                        onValueChange={(v) => setDetailAnswer(qKey, v)}
+                      >
+                        <SelectTrigger
+                          id={`hero-q-${q.id}`}
+                          className={cn("h-11 w-full", inputSurface)}
+                        >
+                          <SelectValue placeholder="Selecciona una opción" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {opts.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div key={q.id} className="space-y-2">
+                    <Label htmlFor={`hero-q-${q.id}`} className="text-xs font-semibold">
+                      {q.questionText}
+                    </Label>
                     <Input
                       id={`hero-q-${q.id}`}
-                      value={detailAnswers[String(q.id)] ?? ""}
-                      onChange={(e) => setDetailAnswer(String(q.id), e.target.value)}
+                      value={detailAnswers[qKey] ?? ""}
+                      onChange={(e) => setDetailAnswer(qKey, e.target.value)}
                       placeholder="Tu respuesta"
                       className={cn("h-11", inputSurface)}
                     />
-                  )}
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

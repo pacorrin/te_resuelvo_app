@@ -1,3 +1,5 @@
+import type { QuestionType } from "@/src/lib/enums/question.enum";
+
 export interface CreateQuestionSetDTO {
   name: string;
   description?: string | null;
@@ -28,7 +30,7 @@ export interface QuestionSetClientDTO {
   questions: {
     id: number;
     questionText: string;
-    questionType: string;
+    questionType: QuestionType;
     options: string[] | null;
     required: boolean;
     sortOrder: number;

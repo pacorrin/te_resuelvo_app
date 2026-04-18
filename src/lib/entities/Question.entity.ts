@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from "typeorm";
+import { QuestionType } from "../enums/question.enum";
 import { QuestionSet } from "./QuestionSet.entity";
 
 @Entity("questions")
@@ -24,8 +25,12 @@ export class Question {
   @Column({ name: "quest_question_text", type: "text" })
   questionText!: string;
 
-  @Column({ name: "quest_type", type: "varchar", length: 50 })
-  questionType!: string;
+  @Column({
+    name: "quest_type",
+    type: "tinyint",
+    comment: "1: text, 2: multiple_choice, 3: single_choice",
+  })
+  questionType!: QuestionType;
 
   @Column({ name: "quest_options", type: "text", nullable: true })
   options!: string | null;
