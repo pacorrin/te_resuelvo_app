@@ -58,7 +58,7 @@ export default function CheckoutContent({
   }, [tenderBuyer]);
 
   const handleLoad = async (stripeSession: Stripe.Checkout.Session) => {
-    console.log(stripeSession);
+    // console.log(stripeSession);
   };
 
   return (

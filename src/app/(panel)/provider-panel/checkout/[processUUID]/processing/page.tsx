@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 
-export default async function PurchasedLeadsSuccessPage({
+export default async function ProcessingCheckoutPage({
   searchParams,
 }: {
   searchParams: Promise<{ session_id?: string; tender_id?: string }>;

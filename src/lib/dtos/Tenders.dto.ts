@@ -65,6 +65,7 @@ export interface CreateTenderBuyerDTO {
 export interface SearchTendersNearbyByCoordinates {
   latitude: number;
   longitude: number;
+  organizationId?: number;
 }
 
 export interface TenderDTO {

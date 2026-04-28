@@ -47,7 +47,7 @@ export class TenderBuyer {
   @Column({
     name: "tendbu_payment_receipt_number",
     type: "varchar",
-    length: 25,
+    length: 100,
     nullable: true,
   })
   paymentReceiptNumber!: string | null;

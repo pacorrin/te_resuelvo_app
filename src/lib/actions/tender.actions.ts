@@ -56,11 +56,13 @@ export async function _getTendersByCustomerAction(
 export async function _getTendersNearbyByCoordinates(
   latitude: number,
   longitude: number,
+  organizationId?: number,
 ): Promise<ActionResponse<TenderClientListDTO[]>> {
   try {
     const tenders = await TenderService.getTendersNearbyByCoordinates({
       latitude,
       longitude,
+      ...(organizationId != null ? { organizationId } : {}),
     });
     return {
       success: true,

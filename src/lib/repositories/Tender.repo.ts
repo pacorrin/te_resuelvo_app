@@ -6,6 +6,7 @@ import {
   CreateTenderDTO,
   SearchTendersNearbyByCoordinates,
 } from "../dtos/Tenders.dto";
+import { TenderPaymentStatus } from "../enums/tender.enum";
 
 const DEFAULT_NEARBY_RADIUS_KM = 50;
 
@@ -92,24 +93,37 @@ export class TenderRepository {
   ): Promise<Tender[]> {
     const repo = await this.getRepo();
     const distanceExpr = haversineKmSql("tender", "lat", "lng");
-    return repo
+    let qb = repo
       .createQueryBuilder("tender")
       .where("tender.tend_latitude != '' AND tender.tend_longitude != ''")
       .andWhere(`${distanceExpr} <= :radius`, {
         lat: data.latitude,
         lng: data.longitude,
         radius: radiusKm,
-      })
-      .orderBy(distanceExpr, "ASC")
-      .getMany();
+      });
+
+    if (data.organizationId != null) {
+      qb = qb.andWhere(
+        `NOT EXISTS (
+          SELECT 1 FROM tenders_buyers tb
+          WHERE tb.tendbu_tender_id = tender.tend_id
+            AND tb.tendbu_organization_id = :excludeOrgId
+            AND tb.tendbu_payment_status = :paidStatus
+        )`,
+        {
+          excludeOrgId: data.organizationId,
+          paidStatus: TenderPaymentStatus.PAID,
+        },
+      );
+    }
+
+    return qb.orderBy(distanceExpr, "ASC").getMany();
   }
 
-  /**
-   * Tenders whose coordinates fall inside at least one coverage disk (center + radius).
-   * Used to match public tenders against an organization's coverage zones.
-   */
+  /** Tenders inside any coverage disk; optional org excludes paid `tenders_buyers` rows for that org. */
   static async findWithinAnyCoverageDisk(
     disks: ReadonlyArray<CoverageDisk>,
+    organizationId?: number,
   ): Promise<Tender[]> {
     if (disks.length === 0) {
       return [];
@@ -129,14 +143,28 @@ export class TenderRepository {
     });
 
     let query = repo
-    .createQueryBuilder("tender")
-    .leftJoinAndSelect("tender.service", "service")
-    .leftJoinAndSelect("tender.customer", "customer")
-    .where("tender.tend_latitude != '' AND tender.tend_longitude != ''")
-    .andWhere(`(${orClauses.join(" OR ")})`, params)
-    .orderBy("tender.createdAt", "DESC");
+      .createQueryBuilder("tender")
+      .leftJoinAndSelect("tender.service", "service")
+      .leftJoinAndSelect("tender.customer", "customer")
+      .where("tender.tend_latitude != '' AND tender.tend_longitude != ''")
+      .andWhere(`(${orClauses.join(" OR ")})`, params);
 
-    return query.getMany();
+    if (organizationId != null) {
+      query = query.andWhere(
+        `NOT EXISTS (
+          SELECT 1 FROM tenders_buyers tb
+          WHERE tb.tendbu_tender_id = tender.tend_id
+            AND tb.tendbu_organization_id = :excludeOrgId
+            AND tb.tendbu_payment_status = :paidStatus
+        )`,
+        {
+          excludeOrgId: organizationId,
+          paidStatus: TenderPaymentStatus.PAID,
+        },
+      );
+    }
+
+    return query.orderBy("tender.createdAt", "DESC").getMany();
   }
 
   static async createTender(data: CreateTenderDTO): Promise<Tender> {

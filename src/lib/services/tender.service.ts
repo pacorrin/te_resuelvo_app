@@ -154,7 +154,10 @@ export class TenderService {
       longitude: z.longitude,
       radiusKm: z.radiusKm,
     }));
-    const rows = await TenderRepository.findWithinAnyCoverageDisk(disks);
+    const rows = await TenderRepository.findWithinAnyCoverageDisk(
+      disks,
+      organizationId,
+    );
     return rows.map((t) => this.serializeTenderClientList(t));
   }
 }

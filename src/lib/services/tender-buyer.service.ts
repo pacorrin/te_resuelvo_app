@@ -10,6 +10,7 @@ import { TenderService } from "./tender.service";
 import { auth } from "../auth/auth";
 import { TenderPaymentStatus } from "../enums/tender.enum";
 import { v7 as uuidv7 } from "uuid";
+import { MarkAsPaidDTO } from "../dtos/TenderBuyer.dto";
 
 const TENDER_BUYER_SERIALIZE_RELATIONS: (
   | "buyer"
@@ -108,6 +109,21 @@ export class TenderBuyerService {
       console.error("Error updating payment:", error);
       throw error;
     }
+  }
+
+  static async markAsPaid(data: MarkAsPaidDTO): Promise<TenderBuyer> {
+    const tenderBuyer = await this.getTenderBuyerByProcessUuid(data.processUuid);
+    if (!tenderBuyer) {
+      throw new Error("Tender buyer not found");
+    }
+    await TenderBuyerRepository.update(tenderBuyer.id, { 
+      paymentStatus: TenderPaymentStatus.PAID, 
+      paymentDate: new Date(Date.now()),
+      paymentReceiptNumber: data.paymentReceiptNumber ?? null,
+      paymentTaxAmount: data.paymentTaxAmount ?? null,
+      amount: data.paymentAmount ?? 0,
+    });
+    return this.serielizeTenderBuyer(tenderBuyer);
   }
 
 

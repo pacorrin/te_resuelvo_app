@@ -26,7 +26,7 @@ export class StripeService {
         enabled: true,
       },
       metadata: {
-        processUuid: processUuid,
+        process_uuid: processUuid,
       },
       line_items: [
         {
@@ -42,7 +42,7 @@ export class StripeService {
         },
       ],
       mode: "payment",
-      return_url: `${origin ?? ""}/provider-panel/leads/purchased?session_id={CHECKOUT_SESSION_ID}&tender_id=${tenderBuyer.tenderId}`,
+      return_url: `${origin ?? ""}/provider-panel/checkout/${processUuid}/processing`,
     });
 
     if (!session.client_secret) {
