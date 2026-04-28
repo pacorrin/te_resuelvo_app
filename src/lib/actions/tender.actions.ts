@@ -9,6 +9,7 @@ import {
 import { ActionResponse } from "../utils/action-response";
 import { protectedAction } from "../protected-action";
 import { OrganizationMemberRepository } from "../repositories/OrganizationMember.repo";
+import { TenderBuyerService } from "../services/tender-buyer.service";
 
 export async function _createTenderFromPublicSiteAction(
   data: CreateTenderFromPublicSiteDTO,
@@ -102,6 +103,39 @@ export const _getTendersForOrganizationCoverageAction = protectedAction(
       return { success: true, data: tenders };
     } catch (error) {
       console.error("Error fetching tenders for organization coverage:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
+/** Tenders this organization has successfully paid for. */
+export const _getPurchasedTendersForOrganizationAction = protectedAction(
+  async (
+    session,
+    organizationId: number,
+  ): Promise<ActionResponse<TenderClientListDTO[]>> => {
+    try {
+      const userId = Number(session.user?.id);
+      if (!Number.isFinite(userId)) {
+        return { success: false, error: "Sesión inválida" };
+      }
+
+      const membership = await OrganizationMemberRepository.findOneBy({
+        userId,
+        organizationId,
+      });
+      if (!membership) {
+        return {
+          success: false,
+          error: "No tienes acceso a esta organización.",
+        };
+      }
+
+      const tenders =
+        await TenderBuyerService.getPaidTendersForOrganization(organizationId);
+      return { success: true, data: tenders };
+    } catch (error) {
+      console.error("Error fetching purchased tenders:", error);
       return { success: false, error: getErrorMessage(error) };
     }
   },

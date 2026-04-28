@@ -28,7 +28,7 @@ function hace(n: number, singular: string, plural: string): string {
   return `hace ${n} ${unit}`;
 }
 
-function formatRelativeEs(date: Date): string {
+export function formatRelativeEs(date: Date): string {
   if (Number.isNaN(date.getTime())) {
     return "—";
   }
@@ -67,7 +67,7 @@ function formatRelativeEs(date: Date): string {
   return hace(years, "año", "años");
 }
 
-function tenderToLeadItem(tender: TenderClientListDTO): LeadListItemData {
+export function tenderToLeadItem(tender: TenderClientListDTO): LeadListItemData {
   const title =
     tender.description.length > 72
       ? `${tender.description.slice(0, 69)}…`
@@ -155,7 +155,6 @@ export function LeadsList({
             <SelectContent>
               <SelectItem value="all">Todos los leads</SelectItem>
               <SelectItem value="available">Disponibles</SelectItem>
-              <SelectItem value="purchased">Comprados</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -179,7 +178,7 @@ export function LeadsList({
         ) : (
           <div className="grid grid-cols-[repeat(auto-fit,minmax(300px,1fr))] gap-3">
             {filteredLeads.map((lead) => (
-              <LeadListItemCompact key={lead.id} lead={lead} organizationId={organizationId} />
+              <LeadListItemCompact key={lead.id} lead={lead} organizationId={organizationId} isPurchased={false} />
             ))}
           </div>
         )}

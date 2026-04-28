@@ -7,7 +7,7 @@ import {
 import { Progress } from "@/src/components/ui/progress";
 import { Separator } from "@/src/components/ui/separator";
 import { StatsGroup } from "./StatsGroup";
-import { LeadsList } from "./LeadsList";
+import { ProviderPanelLeadsTabs } from "./ProviderPanelLeadsTabs";
 import { Button } from "@/src/components/ui/button";
 import Link from "next/link";
 import { auth } from "@/src/lib/auth/auth";
@@ -35,7 +35,7 @@ export default async function Content() {
       <div className="flex flex-col lg:flex-row gap-6 w-full">
         {/* Leads List */}
         <div className="w-full lg:w-3/4 min-w-0">
-          <LeadsList organizationId={organizationId} />
+          <ProviderPanelLeadsTabs organizationId={organizationId} />
         </div>
 
         {/* Sidebar */}

@@ -1,7 +1,12 @@
-import { InitPurchaseProcessDTO, UpdatePaymentDTO } from "../dtos/Tenders.dto";
+import {
+  InitPurchaseProcessDTO,
+  UpdatePaymentDTO,
+  type TenderClientListDTO,
+} from "../dtos/Tenders.dto";
 import { TenderBuyer } from "../entities/TenderBuyer.entity";
 import { TenderRepository } from "../repositories/Tender.repo";
 import { TenderBuyerRepository } from "../repositories/TenderBuyer.repo";
+import { TenderService } from "./tender.service";
 import { auth } from "../auth/auth";
 import { TenderPaymentStatus } from "../enums/tender.enum";
 import { v7 as uuidv7 } from "uuid";
@@ -115,5 +120,18 @@ export class TenderBuyerService {
       throw new Error("Tender buyer not found");
     }
     return this.serielizeTenderBuyer(tenderBuyer);
+  }
+
+  static async getPaidTendersForOrganization(
+    organizationId: number,
+  ): Promise<TenderClientListDTO[]> {
+    const rows =
+      await TenderBuyerRepository.findPaidByOrganizationWithTenders(
+        organizationId,
+      );
+    return rows
+      .map((row) => row.tender)
+      .filter((t): t is NonNullable<typeof t> => Boolean(t))
+      .map((t) => TenderService.serializeTenderClientList(t));
   }
 }

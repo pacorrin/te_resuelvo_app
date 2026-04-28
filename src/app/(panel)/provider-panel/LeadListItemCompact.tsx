@@ -26,7 +26,7 @@ export interface LeadListItemData {
   price: number;
 }
 
-export function LeadListItemCompact({ lead, organizationId }: { lead: LeadListItemData, organizationId: number }) {
+export function LeadListItemCompact({ lead, organizationId, isPurchased }: { lead: LeadListItemData, organizationId: number, isPurchased: boolean }) {
   const router = useRouter();
 
   const handleOpen = () => {
@@ -54,7 +54,7 @@ export function LeadListItemCompact({ lead, organizationId }: { lead: LeadListIt
     <article
       role="button"
       tabIndex={0}
-      onClick={handleOpen}
+      onClick={isPurchased ? handleOpen : undefined}
       className="cursor-pointer rounded-xl border border-zinc-200 bg-white p-3 transition-all hover:border-blue-400  dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-800/60 dark:hover:bg-zinc-900/80"
     >
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -64,9 +64,12 @@ export function LeadListItemCompact({ lead, organizationId }: { lead: LeadListIt
               <Wrench className="h-4 w-4" />
             </div>
             <h4 className="truncate text-sm font-bold leading-tight text-zinc-900 dark:text-zinc-100">
-              {lead.service}
+              {lead.serviceType}
             </h4>
           </div>
+            <div className="text-xs ">
+              {lead.service}
+            </div>
           <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             <span className="font-medium">{lead.id}</span>
             <span>•</span>
@@ -105,7 +108,7 @@ export function LeadListItemCompact({ lead, organizationId }: { lead: LeadListIt
               <>
                 <EyeOff className="h-3.5 w-3.5" />
                 <span>
-                  Cliente oculto ({lead.customer?.name} · {lead.location})
+                  Cliente oculto ({lead.location})
                 </span>
               </>
             ) : (

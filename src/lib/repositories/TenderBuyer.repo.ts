@@ -5,6 +5,7 @@ import {
   CreateTenderBuyerDTO,
   SearchTenderBuyer,
 } from "../dtos/Tenders.dto";
+import { TenderPaymentStatus } from "../enums/tender.enum";
 
 export class TenderBuyerRepository {
   private static async getRepo(): Promise<Repository<TenderBuyer>> {
@@ -31,6 +32,21 @@ export class TenderBuyerRepository {
     return repo.find({
       where: { organizationId },
       relations,
+    });
+  }
+
+  /** Paid purchases for an organization, with tender graph for list display. */
+  static async findPaidByOrganizationWithTenders(
+    organizationId: number,
+  ): Promise<TenderBuyer[]> {
+    const repo = await this.getRepo();
+    return repo.find({
+      where: {
+        organizationId,
+        paymentStatus: TenderPaymentStatus.PAID,
+      },
+      relations: ["tender", "tender.service", "tender.customer"],
+      order: { id: "DESC" },
     });
   }
 
