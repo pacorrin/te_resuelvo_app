@@ -23,7 +23,12 @@ export default async function ProcessingCheckoutPage({
   }
 
   if (row) {
-    if (row.paymentStatus === TenderPaymentStatus.PAID) {
+    const nowPlus10min = new Date(Date.now() + 10 * 60 * 1000);
+    if (
+      row.paymentStatus === TenderPaymentStatus.PAID &&
+      row.paymentDate &&
+      row.paymentDate > nowPlus10min
+    ) {
       redirect("/provider-panel");
     }
   }
