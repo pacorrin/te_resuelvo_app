@@ -32,7 +32,7 @@ import {
 import { toast } from "sonner";
 import { Spinner } from "@/src/components/ui/spinner";
 import { getTenderNumber } from "@/src/lib/utils/tender.utils";
-import { cn } from "@/src/lib/utils";
+import { cn, toastError, toastInfo } from "@/src/lib/utils";
 
 const inputSurface =
   "bg-muted/50 border-muted-foreground/10 shadow-none focus-visible:bg-background";
@@ -103,7 +103,7 @@ export function CustomerRequestForm({
       if (result.success && result.data) {
         setPublicServices(result.data);
       } else if (!result.success) {
-        toast.error(result.error ?? "No se pudieron cargar los servicios.");
+        toastError(result.error ?? "No se pudieron cargar los servicios.");
       }
     })();
     return () => {
@@ -136,34 +136,34 @@ export function CustomerRequestForm({
     const description = form?.querySelector<HTMLTextAreaElement>('[name="description"]');
 
     if (!name?.value.trim()) {
-      toast.error("Indica tu nombre completo.");
+      toastInfo("Indica tu nombre completo.", { position: "bottom-center" });
       name?.focus();
       return false;
     }
     if (!phone?.value.trim()) {
-      toast.error("Indica un teléfono de contacto.");
+      toastInfo("Indica un teléfono de contacto.", { position: "bottom-center" });
       phone?.focus();
       return false;
     }
     if (!email?.value.trim()) {
-      toast.error("Indica tu correo electrónico.");
+      toastInfo("Indica tu correo electrónico.", { position: "bottom-center" });
       email?.focus();
       return false;
     }
     if (!selectedService) {
-      toast.error("Selecciona un tipo de servicio.");
+      toastInfo("Selecciona un tipo de servicio.", { position: "bottom-center" });
       return false;
     }
     if (!addressLine.trim()) {
-      toast.error("Indica una dirección.");
+      toastInfo("Indica una dirección.", { position: "bottom-center" });
       return false;
     }
     if (!postalCode.trim()) {
-      toast.error("Indica el código postal.");
+      toastInfo("Indica el código postal.", { position: "bottom-center" });
       return false;
     }
     if (!description?.value.trim()) {
-      toast.error("Describe el problema o el servicio que necesitas.");
+      toastInfo("Describe el problema o el servicio que necesitas.", { position: "bottom-center" });
       description?.focus();
       return false;
     }
@@ -177,7 +177,7 @@ export function CustomerRequestForm({
     setIsFetchingQuestionSet(false);
 
     if (!result.success) {
-      toast.error(result.error || "No se pudo obtener el cuestionario del servicio.");
+      toastError(result.error || "No se pudo obtener el cuestionario del servicio.");
       return;
     }
 
@@ -194,17 +194,17 @@ export function CustomerRequestForm({
       const raw = detailAnswers[String(q.id)];
       if (q.questionType === QuestionType.MULTIPLE_CHOICE) {
         if (parseMultiAnswer(raw).length === 0) {
-          toast.error(`Responde: ${q.questionText}`);
+          toastError(`Responde: ${q.questionText}`);
           return;
         }
       } else if (!raw?.trim()) {
-        toast.error(`Responde: ${q.questionText}`);
+        toastError(`Responde: ${q.questionText}`);
         return;
       }
     }
 
     if (!addressLine.trim()) {
-      toast.error("Indica una dirección.");
+      toastError("Indica una dirección.");
       return;
     }
     setIsLoading(true);
@@ -370,7 +370,7 @@ export function CustomerRequestForm({
               >
                 {servicesBySector.map((group) => (
                   <SelectGroup key={group.label}>
-                    <SelectLabel>{group.label}</SelectLabel>
+                    <SelectLabel className="text-secondary font-bold">• {group.label}</SelectLabel>
                     {group.services.map((svc) => (
                       <SelectItem key={svc.id} value={String(svc.id)}>
                         {svc.name}

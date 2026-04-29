@@ -198,7 +198,7 @@ export function Autocomplete<
           className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md"
         >
           {listEmpty ? (
-            <li className="px-3 py-2 text-sm text-muted-foreground">
+            <li className="px-3 py-2 text-sm text-secondary">
               {emptyMessage}
             </li>
           ) : filteredGroups ? (
@@ -209,7 +209,7 @@ export function Autocomplete<
                   <React.Fragment key={group.id}>
                     <li
                       role="presentation"
-                      className="pointer-events-none border-b border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground first:border-t-0"
+                      className="pointer-events-none border-b border-border/60 bg-muted/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide text-secondary first:border-t-0"
                     >
                       {group.label}
                     </li>
