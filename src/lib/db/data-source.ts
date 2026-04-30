@@ -12,6 +12,7 @@ import { TenderBuyer } from "../entities/TenderBuyer.entity";
 import { QuestionSet } from "../entities/QuestionSet.entity";
 import { Question } from "../entities/Question.entity";
 import { QuestionSetAnswer } from "../entities/QuestionSetAnswer.entity";
+import { ServiceTicket } from "../entities/ServiceTickets.entity";
 
 let AppDataSourceInstance: DataSource;
 
@@ -39,6 +40,7 @@ try {
       QuestionSet,
       Question,
       QuestionSetAnswer,
+      ServiceTicket,
     ],
     subscribers: [],
   });

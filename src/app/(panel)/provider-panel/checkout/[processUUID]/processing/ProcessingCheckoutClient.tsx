@@ -140,7 +140,7 @@ export default function ProcessingCheckoutClient({
             <Button asChild variant="outline" className="w-full sm:w-auto">
               <Link href="/provider-panel">
                 <Home className="mr-2 h-4 w-4" />
-                Ir al inicio del panel
+                Ir al inicio
               </Link>
             </Button>
           </div>

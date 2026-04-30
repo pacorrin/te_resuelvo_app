@@ -3,6 +3,8 @@ import Stripe from "stripe";
 import { stripe } from "@/src/lib/stripe";
 import { TenderBuyerService } from "@/src/lib/services/tender-buyer.service";
 import { TenderPaymentStatus } from "@/src/lib/enums/tender.enum";
+import { ServiceTicketService } from "@/src/lib/services/service-tickets.service";
+import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
 
 export const runtime = "nodejs";
 
@@ -45,6 +47,17 @@ export async function POST(request: Request) {
         paymentReceiptNumber: checkoutSession?.id,
         paymentTaxAmount: Number((checkoutSession?.total_details?.amount_tax ?? 0) / 100),
         paymentAmount: Number((checkoutSession?.amount_total ?? 0) / 100),
+      });
+
+      const tenderBuyer = await TenderBuyerService.getTenderBuyerByProcessUuid(processUuid);
+      if (!tenderBuyer) {
+        return new NextResponse("Tender buyer not found", { status: 400 });
+      }
+
+      await ServiceTicketService.create({
+        tenderId: tenderBuyer.tender.id,
+        organizationId: tenderBuyer.organizationId,
+        status: ServiceTicketStatus.OPEN,
       });
 
       break;
