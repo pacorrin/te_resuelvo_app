@@ -113,6 +113,28 @@ export interface TenderClientListDTO {
   } | null;
 }
 
+export interface TenderFollowUpDTO {
+  id: number;
+  description: string;
+  personName: string;
+  personPhone: string;
+  tenderAddress: string;
+  tenderAddressReference?: string | null;
+  createdAt: string;
+  service: {
+    id: number;
+    name: string;
+    leadPrice: number;
+  } | null;
+  ticket: {
+    id: number;
+    organizationId: number;
+    status: number;
+    serviceScheduledFor: Date | null;
+    createdAt: Date;
+  } | null;
+}
+
 export interface InitPurchaseProcessDTO {
   tenderId: number;
   organizationId: number;

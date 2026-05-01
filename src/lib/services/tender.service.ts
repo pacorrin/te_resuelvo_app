@@ -4,6 +4,7 @@ import {
   CreateTenderFromPublicSiteDTO,
   SearchTender,
   SearchTendersNearbyByCoordinates,
+  TenderFollowUpDTO,
   type TenderClientListDTO,
 } from "../dtos/Tenders.dto";
 import { Tender } from "../entities/Tender.entity";
@@ -13,6 +14,7 @@ import {
   QuestionSetAnswerService,
   QUESTION_SET_ANSWER_ENTITY_TENDER,
 } from "./question-set-answer.service";
+import { ServiceTicketRepository } from "../repositories/ServiceTickets.repo";
 
 export class TenderService {
   static serializeTenderClientList(tender: Tender): TenderClientListDTO {
@@ -43,7 +45,7 @@ export class TenderService {
             phone: tender.customer.phone ?? null,
             name: tender.customer.name ?? null,
           }
-        : null,
+        : null
     };
   }
 

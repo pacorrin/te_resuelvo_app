@@ -67,13 +67,14 @@ export function formatRelativeEs(date: Date): string {
   return hace(years, "año", "años");
 }
 
-export function tenderToLeadItem(tender: TenderClientListDTO): LeadListItemData {
+export function tenderToLeadItem(tender: TenderClientListDTO, ticketId: number | null = null): LeadListItemData {
   const title =
     tender.description.length > 72
       ? `${tender.description.slice(0, 69)}…`
       : tender.description;
 
   return {
+    ticketId: ticketId,
     id: tender.id,
     service: title,
     serviceType: tender.service?.name ?? "—",

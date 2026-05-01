@@ -4,6 +4,7 @@ import { getErrorMessage } from "@/src/lib/utils/error";
 import { TenderService } from "@/src/lib/services/tender.service";
 import {
   CreateTenderFromPublicSiteDTO,
+  TenderFollowUpDTO,
   type TenderClientListDTO,
 } from "../dtos/Tenders.dto";
 import { ActionResponse } from "../utils/action-response";

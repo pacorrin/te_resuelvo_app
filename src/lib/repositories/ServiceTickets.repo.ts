@@ -30,7 +30,7 @@ export class ServiceTicketRepository {
 
   static async findOneBy(
     searchParams: SearchServiceTicket,
-    relations: ("tender" | "organization")[] = [],
+    relations: ("tender" | "organization" | "tender.service" | "tender.customer")[] = [],
   ): Promise<ServiceTicket | null> {
     const repo = await this.getRepo();
     return repo.findOne({
@@ -41,7 +41,7 @@ export class ServiceTicketRepository {
 
   static async findAll(
     searchParams: SearchServiceTicket = {},
-    relations: ("tender" | "organization")[] = [],
+    relations: ("tender" | "organization" | "tender.service" | "tender.customer")[] = [],
   ): Promise<ServiceTicket[]> {
     const repo = await this.getRepo();
     return repo.find({

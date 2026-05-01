@@ -12,6 +12,10 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Label } from "@/src/components/ui/label";
 import { Separator } from "@/src/components/ui/separator";
+import {
+  buildGoogleMapsSearchUrl,
+  hasUsableMapCoordinates,
+} from "./leadClientMaps";
 
 export type LeadClientData = {
   name: string;
@@ -19,6 +23,9 @@ export type LeadClientData = {
   email: string;
   address: string;
   preferredContact: string;
+  /** Tender `tend_latitude` / `tend_longitude` (string in DB). */
+  latitude?: string | null;
+  longitude?: string | null;
 };
 
 export default function LeadClientInformationCard({
@@ -119,13 +126,21 @@ export default function LeadClientInformationCard({
               Dirección del servicio
             </Label>
             <p className="font-medium">{localClient.address}</p>
+            {hasUsableMapCoordinates(localClient) ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Coordenadas: {String(localClient.latitude).trim()},{" "}
+                {String(localClient.longitude).trim()} (mapa por ubicación)
+              </p>
+            ) : null}
             <a
-              href={`https://maps.google.com/?q=${encodeURIComponent(localClient.address)}`}
+              href={buildGoogleMapsSearchUrl(localClient)}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-primary hover:underline"
+              className="mt-1 inline-block text-xs text-primary hover:underline"
             >
-              Ver en Google Maps
+              {hasUsableMapCoordinates(localClient)
+                ? "Ver en Google Maps (coordenadas)"
+                : "Ver en Google Maps (dirección)"}
             </a>
           </div>
         </div>

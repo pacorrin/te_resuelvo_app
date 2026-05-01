@@ -4,10 +4,12 @@ import {
   Column,
   CreateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from "typeorm";
 import { User } from "./User.entity";
 import { Service } from "./Service.entity";
+import { ServiceTicket } from "./ServiceTickets.entity";
 
 @Entity("tenders")
 export class Tender {

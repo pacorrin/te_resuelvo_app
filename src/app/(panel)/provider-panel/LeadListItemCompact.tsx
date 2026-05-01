@@ -17,9 +17,11 @@ import { _initPurchaseProcess } from "@/src/lib/actions/tender-buyer.actions";
 import { _getTenderQuestionAnswersForOrgAction } from "@/src/lib/actions/question-set-answer.actions";
 import { toast } from "sonner";
 import { toastError } from "@/src/lib/utils";
+import { getTenderNumber } from "@/src/lib/utils/tender.utils";
 
 export interface LeadListItemData {
   id: number;
+  ticketId: number | null;
   service: string;
   serviceType: string;
   customer: {
@@ -58,16 +60,13 @@ function LeadCardContent({
           </div>
           <div className="text-xs ">{lead.service}</div>
           <div className="flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
-            <span className="font-medium">{lead.id}</span>
+            <span className="font-medium">#{getTenderNumber(lead.id)}</span>
             <span>•</span>
             <span>{lead.date}</span>
           </div>
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          <span className="text-[10px] font-medium whitespace-nowrap text-zinc-400">
-            {lead.date}
-          </span>
           {lead.status === "available" ? (
             <Badge className="h-5 rounded-md bg-blue-100 px-2 text-[10px] text-blue-800 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300">
               Disponible
@@ -139,9 +138,12 @@ export function LeadListItemCompact({
   >(null);
 
   const handleOpen = () => {
-    router.push(
-      `/provider-panel/leads/followup/${encodeURIComponent(lead.id)}`,
-    );
+    console.log("lead.ticketId", lead);
+    if (lead.ticketId) {
+      router.push(
+        `/provider-panel/leads/followup/${encodeURIComponent(lead.ticketId)}`,
+      );
+    } 
   };
 
   const handlePurchase = async (e: React.MouseEvent<HTMLButtonElement>) => {

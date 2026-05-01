@@ -14,6 +14,8 @@ import {
 } from "./LeadListItemCompact";
 import { _getPurchasedTendersForOrganizationAction } from "@/src/lib/actions/tender.actions";
 import { tenderToLeadItem } from "./LeadsList";
+import { _getTicketsByOrganization } from "@/src/lib/actions/service-tickets.actions";
+import { TenderClientListDTO } from "@/src/lib/dtos/Tenders.dto";
 
 export function PurchasedLeadsList({
   organizationId,
@@ -35,18 +37,16 @@ export function PurchasedLeadsList({
     setLoading(true);
     setError(null);
     try {
-      const result =
-        await _getPurchasedTendersForOrganizationAction(organizationId);
-      if (result.success && result.data) {
-        setLeads(
-          result.data.map((t) => ({
-            ...tenderToLeadItem(t),
-            status: "purchased" as const,
-          })),
-        );
+      const tickets = await _getTicketsByOrganization(organizationId);
+      console.log("tickets", tickets);
+      if (tickets.success && tickets.data) {
+        setLeads(tickets.data.map((t) => ({
+          ...tenderToLeadItem(t.tender as TenderClientListDTO, t.id),
+          status: "purchased" as const,
+        })));
       } else {
         setLeads([]);
-        setError(result.error ?? "No se pudieron cargar los leads comprados.");
+        setError(tickets.error ?? "No se pudieron cargar los leads comprados.");
       }
     } catch (err) {
       console.error("Error fetching purchased tenders:", err);

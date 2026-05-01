@@ -31,11 +31,11 @@ export class ServiceTicket {
   @CreateDateColumn({ name: "tick_created_at", type: "datetime" })
   createdAt!: Date;
 
-  @ManyToOne(() => Tender, { eager: false, nullable: false })
+  @ManyToOne(() => Tender, { nullable: false })
   @JoinColumn({ name: "tick_tender_id", referencedColumnName: "id" })
   tender!: Tender;
 
-  @ManyToOne(() => Organization, { eager: false, nullable: false })
+  @ManyToOne(() => Organization, { nullable: false })
   @JoinColumn({ name: "tick_organization_id", referencedColumnName: "id" })
   organization!: Organization;
 }
