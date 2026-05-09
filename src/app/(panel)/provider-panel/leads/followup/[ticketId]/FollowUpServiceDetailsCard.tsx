@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ClipboardList } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -9,12 +11,14 @@ import {
 } from "@/src/components/ui/card";
 import { Label } from "@/src/components/ui/label";
 import { Button } from "@/src/components/ui/button";
+import { Separator } from "@/src/components/ui/separator";
 
 export type FollowUpServiceDetails = {
   service: string;
   description: string;
   requestDate: string;
   scheduledDate: string;
+  answers: { questionText: string; answer: string }[];
 };
 
 const DESCRIPTION_PREVIEW_CHARS = 220;
@@ -24,6 +28,7 @@ export default function FollowUpServiceDetailsCard({
   description,
   requestDate,
   scheduledDate,
+  answers,
 }: FollowUpServiceDetails) {
   const [descriptionExpanded, setDescriptionExpanded] = useState(false);
   const canTruncate = description.length > DESCRIPTION_PREVIEW_CHARS;
@@ -68,6 +73,43 @@ export default function FollowUpServiceDetailsCard({
           <div>
             <Label className="text-sm font-medium">Cita programada</Label>
             <p className="text-muted-foreground text-sm mt-1">{scheduledDate}</p>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-row items-center gap-2 mt-0.5">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+              <ClipboardList className="h-5 w-5 text-primary" aria-hidden />
+            </div>
+            <Label className="text-sm font-medium">Detalles adicionales</Label>
+          </div>
+     
+          
+          <div className="min-w-0 flex-1 space-y-3">
+
+            {answers.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                No hay respuestas registradas.
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {answers.map((item, index) => (
+                  <li
+                    key={`${item.questionText}-${index}`}
+                    className="border-border/80 bg-muted/30 rounded-lg border px-3 py-2.5 shadow-sm"
+                  >
+                    <p className="text-foreground text-sm font-medium leading-snug">
+                      {item.questionText}
+                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm leading-relaxed whitespace-pre-wrap">
+                      {item.answer || "—"}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
       </CardContent>

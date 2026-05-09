@@ -22,6 +22,7 @@ export type LeadClientData = {
   phone: string;
   email: string;
   address: string;
+  addressReference: string;
   preferredContact: string;
   /** Tender `tend_latitude` / `tend_longitude` (string in DB). */
   latitude?: string | null;
@@ -126,12 +127,6 @@ export default function LeadClientInformationCard({
               Dirección del servicio
             </Label>
             <p className="font-medium">{localClient.address}</p>
-            {hasUsableMapCoordinates(localClient) ? (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Coordenadas: {String(localClient.latitude).trim()},{" "}
-                {String(localClient.longitude).trim()} (mapa por ubicación)
-              </p>
-            ) : null}
             <a
               href={buildGoogleMapsSearchUrl(localClient)}
               target="_blank"
@@ -142,6 +137,20 @@ export default function LeadClientInformationCard({
                 ? "Ver en Google Maps (coordenadas)"
                 : "Ver en Google Maps (dirección)"}
             </a>
+          </div>
+        </div>
+
+        <Separator />
+
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+            <MapPin className="w-5 h-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <Label className="text-xs text-muted-foreground">
+              Referencia
+            </Label>
+            <p className="font-medium">{localClient.addressReference}</p>
           </div>
         </div>
       </CardContent>

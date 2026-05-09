@@ -56,7 +56,7 @@ export class ServiceTicketRepository {
     const row = repo.create({
       tenderId: data.tenderId,
       organizationId: data.organizationId,
-      status: data.status ?? ServiceTicketStatus.OPEN,
+      status: data.status ?? ServiceTicketStatus.PENDING,
       serviceScheduledFor: data.serviceScheduledFor ?? null,
     });
     return repo.save(row);

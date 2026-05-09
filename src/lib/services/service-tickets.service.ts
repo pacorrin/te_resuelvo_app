@@ -101,7 +101,7 @@ export class ServiceTicketService {
     return ServiceTicketRepository.create({
       tenderId: data.tenderId,
       organizationId: data.organizationId,
-      status: data.status ?? ServiceTicketStatus.OPEN,
+      status: data.status ?? ServiceTicketStatus.PENDING,
       serviceScheduledFor: data.serviceScheduledFor ?? null,
     });
   }

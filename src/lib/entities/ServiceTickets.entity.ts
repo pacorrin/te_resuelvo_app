@@ -22,7 +22,7 @@ export class ServiceTicket {
   @Column({ name: "tick_organization_id", type: "int" })
   organizationId!: number;
 
-  @Column({ name: "tick_status", type: "smallint", default: ServiceTicketStatus.OPEN })
+  @Column({ name: "tick_status", type: "smallint", default: ServiceTicketStatus.PENDING })
   status!: ServiceTicketStatus;
 
   @Column({ name: "tick_service_scheduled_for", type: "datetime", nullable: true })
