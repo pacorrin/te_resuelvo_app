@@ -17,6 +17,7 @@ import { PanelHeader } from "@/src/components/PanelHeader";
 import { _getTicketById } from "@/src/lib/actions/service-tickets.actions";
 import { getTenderNumber } from "@/src/lib/utils/tender.utils";
 import { _getTenderQuestionAnswersForOrgAction } from "@/src/lib/actions/question-set-answer.actions";
+import { _listServiceTicketIncidences } from "@/src/lib/actions/service-tickets-incidences.actions";
 
 function formatFollowUpDate(value: string | Date | null | undefined): string {
   if (value == null || value === "") return "—";
@@ -50,6 +51,11 @@ export default async function LeadFollowUpPage({
   }
 
   const ticket = ticketResult.data;
+  const incidencesResult = await _listServiceTicketIncidences(ticketId);
+  const initialIncidences =
+    incidencesResult.success && incidencesResult.data
+      ? incidencesResult.data
+      : [];
   const tender = ticket.tender;
   if (!tender) {
     return <div>No se encontró la información del tender.</div>;
@@ -98,7 +104,10 @@ export default async function LeadFollowUpPage({
                   answers={answersResult.data ?? []}
                 />
                 <FollowUpTimelineCard />
-                <FollowUpIncidentsCard />
+                <FollowUpIncidentsCard
+                  ticketId={ticketId}
+                  initialIncidences={initialIncidences}
+                />
               </div>
 
               <div className="space-y-6">

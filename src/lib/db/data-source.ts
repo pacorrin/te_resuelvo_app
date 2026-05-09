@@ -13,6 +13,7 @@ import { QuestionSet } from "../entities/QuestionSet.entity";
 import { Question } from "../entities/Question.entity";
 import { QuestionSetAnswer } from "../entities/QuestionSetAnswer.entity";
 import { ServiceTicket } from "../entities/ServiceTickets.entity";
+import { ServiceTicketIncidence } from "../entities/ServiceTicketIncidence.entity";
 
 let AppDataSourceInstance: DataSource;
 
@@ -41,6 +42,7 @@ try {
       Question,
       QuestionSetAnswer,
       ServiceTicket,
+      ServiceTicketIncidence,
     ],
     subscribers: [],
   });

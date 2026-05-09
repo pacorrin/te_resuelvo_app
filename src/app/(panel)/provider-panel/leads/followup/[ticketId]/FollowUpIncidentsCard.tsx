@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertCircle,
   AlertTriangle,
-  CheckCircle,
   Clock,
   Info,
   Plus,
@@ -28,36 +28,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
+import {
+  createServiceTicketIncidence,
+  _listServiceTicketIncidences,
+} from "@/src/lib/actions/service-tickets-incidences.actions";
+import { ServiceTicketIncidenceType } from "@/src/lib/enums/service-tickets.enum";
+import type { ServiceTicketIncidenceDTO } from "@/src/lib/services/service-ticket-incidence.service";
+import { toastError, toastSuccess } from "@/src/lib/utils";
 
-export type FollowUpIncident = {
-  id: number;
-  type: string;
-  date: string;
-  description: string;
-  resolvedAt: string | null;
-};
+const DESC_MAX = 255;
 
-const INITIAL_INCIDENTS: FollowUpIncident[] = [
-  {
-    id: 1,
-    type: "problema",
-    date: "15 Ene, 2:00 PM",
-    description:
-      "Cliente reportó que la fuga es más grande de lo que pensaba. Requiere piezas adicionales.",
-    resolvedAt: null,
-  },
-  {
-    id: 2,
-    type: "nota",
-    date: "15 Ene, 4:30 PM",
-    description:
-      "Cliente mencionó que el problema comenzó hace 3 días. Pidió garantía por escrito.",
-    resolvedAt: null,
-  },
-];
+function normalizeIncidenceRows(
+  rows: ServiceTicketIncidenceDTO[],
+): ServiceTicketIncidenceDTO[] {
+  return rows.map((r) => ({
+    ...r,
+    createdAt:
+      typeof r.createdAt === "string" ? new Date(r.createdAt) : r.createdAt,
+  }));
+}
 
-function getIncidentIcon(type: string) {
+function incidenceTypeSlug(type: ServiceTicketIncidenceType): string {
   switch (type) {
+    case ServiceTicketIncidenceType.PROBLEMA:
+      return "problema";
+    case ServiceTicketIncidenceType.RETRASO:
+      return "retraso";
+    case ServiceTicketIncidenceType.CANCELACION:
+      return "cancelacion";
+    case ServiceTicketIncidenceType.NOTA:
+    default:
+      return "nota";
+  }
+}
+
+function formatIncidentDate(value: Date | string): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function getIncidentIcon(typeSlug: string) {
+  switch (typeSlug) {
     case "problema":
       return AlertTriangle;
     case "retraso":
@@ -71,8 +86,8 @@ function getIncidentIcon(type: string) {
   }
 }
 
-function getIncidentColor(type: string) {
-  switch (type) {
+function getIncidentColor(typeSlug: string) {
+  switch (typeSlug) {
     case "problema":
       return "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/30";
     case "retraso":
@@ -86,8 +101,8 @@ function getIncidentColor(type: string) {
   }
 }
 
-function getIncidentLabel(type: string) {
-  switch (type) {
+function getIncidentLabel(typeSlug: string) {
+  switch (typeSlug) {
     case "problema":
       return "Problema";
     case "retraso":
@@ -97,60 +112,96 @@ function getIncidentLabel(type: string) {
     case "nota":
       return "Nota";
     default:
-      return type;
+      return typeSlug;
   }
 }
 
-export default function FollowUpIncidentsCard() {
-  const [incidentType, setIncidentType] = useState("nota");
+type FollowUpIncidentsCardProps = {
+  ticketId: number;
+  initialIncidences: ServiceTicketIncidenceDTO[];
+};
+
+export default function FollowUpIncidentsCard({
+  ticketId,
+  initialIncidences,
+}: FollowUpIncidentsCardProps) {
+  const router = useRouter();
+  const [incidentType, setIncidentType] = useState<ServiceTicketIncidenceType>(
+    ServiceTicketIncidenceType.NOTA,
+  );
   const [incidentDescription, setIncidentDescription] = useState("");
-  const [incidents, setIncidents] =
-    useState<FollowUpIncident[]>(INITIAL_INCIDENTS);
+  const [incidents, setIncidents] = useState<ServiceTicketIncidenceDTO[]>(() =>
+    normalizeIncidenceRows(initialIncidences),
+  );
+  const [saving, setSaving] = useState(false);
+  const [loadingList, setLoadingList] = useState(false);
 
-  const handleAddIncident = () => {
-    if (!incidentDescription.trim()) return;
+  useEffect(() => {
+    setIncidents(normalizeIncidenceRows(initialIncidences));
+  }, [initialIncidences]);
 
-    const newIncident: FollowUpIncident = {
-      id: Math.max(0, ...incidents.map((i) => i.id)) + 1,
-      type: incidentType,
-      date: new Date().toLocaleDateString("es-MX", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      description: incidentDescription,
-      resolvedAt: null,
-    };
-    setIncidents([newIncident, ...incidents]);
-    setIncidentDescription("");
-    setIncidentType("nota");
+  const refetchList = async () => {
+    setLoadingList(true);
+    try {
+      const result = await _listServiceTicketIncidences(ticketId);
+      if (result.success && result.data) {
+        setIncidents(normalizeIncidenceRows(result.data));
+      } else if (!result.success) {
+        toastError(result.error ?? "No se pudieron cargar las incidencias.");
+      }
+    } finally {
+      setLoadingList(false);
+    }
   };
 
-  const handleResolveIncident = (id: number) => {
-    setIncidents(
-      incidents.map((incident) =>
-        incident.id === id
-          ? {
-              ...incident,
-              resolvedAt: new Date().toLocaleDateString("es-MX", {
-                day: "numeric",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              }),
-            }
-          : incident,
-      ),
-    );
+  const handleAddIncident = async () => {
+    const trimmed = incidentDescription.trim();
+    if (!trimmed) return;
+
+    setSaving(true);
+    try {
+      const result = await createServiceTicketIncidence({
+        ticketId,
+        type: incidentType,
+        description: trimmed.slice(0, DESC_MAX),
+      });
+      if (result.success && result.data) {
+        toastSuccess("Incidencia registrada.");
+        setIncidentDescription("");
+        setIncidentType(ServiceTicketIncidenceType.NOTA);
+        const row = normalizeIncidenceRows([result.data])[0];
+        setIncidents((prev) => [row, ...prev]);
+        router.refresh();
+      } else {
+        toastError(
+          result.error ?? "No se pudo registrar la incidencia.",
+        );
+      }
+    } catch {
+      toastError("No se pudo registrar la incidencia.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <AlertCircle className="h-5 w-5 text-secondary" />
-          <CardTitle>Incidencias del Servicio</CardTitle>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-secondary" />
+            <CardTitle>Incidencias del Servicio</CardTitle>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shrink-0 text-muted-foreground"
+            onClick={() => void refetchList()}
+            disabled={loadingList}
+          >
+            {loadingList ? "Actualizando…" : "Actualizar"}
+          </Button>
         </div>
         <CardDescription>
           Documenta problemas, retrasos y notas importantes relacionadas al servicio
@@ -158,24 +209,44 @@ export default function FollowUpIncidentsCard() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-            <div className="md:col-span-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
+            <div className="shrink-0 sm:w-40">
               <Label htmlFor="incident-type" className="text-sm">
                 Tipo
               </Label>
-              <Select value={incidentType} onValueChange={setIncidentType}>
-                <SelectTrigger id="incident-type" className="mt-1">
+              <Select
+                value={String(incidentType)}
+                onValueChange={(v) =>
+                  setIncidentType(Number(v) as ServiceTicketIncidenceType)
+                }
+                disabled={saving}
+              >
+                <SelectTrigger id="incident-type" className="mt-1 w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="nota">Nota</SelectItem>
-                  <SelectItem value="problema">Problema</SelectItem>
-                  <SelectItem value="retraso">Retraso</SelectItem>
-                  <SelectItem value="cancelacion">Cancelación</SelectItem>
+                  <SelectItem value={String(ServiceTicketIncidenceType.NOTA)}>
+                    Nota
+                  </SelectItem>
+                  <SelectItem
+                    value={String(ServiceTicketIncidenceType.PROBLEMA)}
+                  >
+                    Problema
+                  </SelectItem>
+                  <SelectItem
+                    value={String(ServiceTicketIncidenceType.RETRASO)}
+                  >
+                    Retraso
+                  </SelectItem>
+                  <SelectItem
+                    value={String(ServiceTicketIncidenceType.CANCELACION)}
+                  >
+                    Cancelación
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            <div className="md:col-span-2">
+            <div className="min-w-0 flex-1">
               <Label htmlFor="incident-description" className="text-sm">
                 Descripción
               </Label>
@@ -184,82 +255,56 @@ export default function FollowUpIncidentsCard() {
                 placeholder="Describe la incidencia..."
                 value={incidentDescription}
                 onChange={(e) => setIncidentDescription(e.target.value)}
+                maxLength={DESC_MAX}
+                disabled={saving}
                 className="mt-1"
               />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Máximo {DESC_MAX} caracteres
+              </p>
             </div>
           </div>
           <Button
             size="sm"
-            onClick={handleAddIncident}
-            disabled={!incidentDescription.trim()}
+            onClick={() => void handleAddIncident()}
+            disabled={saving || !incidentDescription.trim()}
             className="w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Agregar incidencia
+            {saving ? "Guardando…" : "Agregar incidencia"}
           </Button>
         </div>
 
         <div className="space-y-3">
-          <Label className="text-sm font-medium">
-            Historial de incidencias (
-            {incidents.filter((i) => !i.resolvedAt).length} activas)
-          </Label>
           {incidents.length === 0 ? (
             <div className="py-8 text-center text-sm text-muted-foreground">
               No hay incidencias registradas
             </div>
           ) : (
             incidents.map((incident) => {
-              const IncidentIcon = getIncidentIcon(incident.type);
+              const slug = incidenceTypeSlug(incident.type);
+              const IncidentIcon = getIncidentIcon(slug);
               return (
                 <div
                   key={incident.id}
-                  className={`rounded-lg border p-3 ${
-                    incident.resolvedAt ? "bg-muted/20 opacity-60" : ""
-                  }`}
+                  className="rounded-lg border p-3"
                 >
                   <div className="flex gap-3">
                     <div
-                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${getIncidentColor(incident.type)}`}
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${getIncidentColor(slug)}`}
                     >
                       <IncidentIcon className="h-4 w-4" />
                     </div>
-                    <div className="flex-1">
-                      <div className="mb-1 flex items-start justify-between">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className="text-xs">
-                            {getIncidentLabel(incident.type)}
-                          </Badge>
-                          {incident.resolvedAt && (
-                            <Badge
-                              variant="outline"
-                              className="border-green-300 bg-green-100 text-xs text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300"
-                            >
-                              Resuelta
-                            </Badge>
-                          )}
-                        </div>
-                        <span className="text-xs text-muted-foreground">
-                          {incident.date}
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {getIncidentLabel(slug)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">
+                          {formatIncidentDate(incident.createdAt)}
                         </span>
                       </div>
-                      <p className="mb-2 text-sm">{incident.description}</p>
-                      {incident.resolvedAt && (
-                        <p className="text-xs text-muted-foreground">
-                          Resuelta el {incident.resolvedAt}
-                        </p>
-                      )}
-                      {!incident.resolvedAt && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-2 h-7 text-xs"
-                          onClick={() => handleResolveIncident(incident.id)}
-                        >
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Marcar como resuelta
-                        </Button>
-                      )}
+                      <p className="text-sm break-words">{incident.description}</p>
                     </div>
                   </div>
                 </div>
