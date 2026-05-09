@@ -5,6 +5,7 @@ import FollowUpServiceDetailsCard from "./FollowUpServiceDetailsCard";
 import FollowUpTimelineCard from "./FollowUpTimelineCard";
 import FollowUpIncidentsCard from "./FollowUpIncidentsCard";
 import FollowUpStatusManagementCard from "./FollowUpStatusManagementCard";
+import FollowUpScheduleAppointmentCard from "./FollowUpScheduleAppointmentCard";
 import FollowUpCommunicationCenterCard from "./FollowUpCommunicationCenterCard";
 import FollowUpRecommendationsCard from "./FollowUpRecommendationsCard";
 import FollowUpQuickActionsCard from "./FollowUpQuickActionsCard";
@@ -102,6 +103,15 @@ export default async function LeadFollowUpPage({
 
               <div className="space-y-6">
                 <FollowUpStatusManagementCard ticketId={ticketId} />
+                <FollowUpScheduleAppointmentCard
+                  key={
+                    ticket.serviceScheduledFor
+                      ? new Date(ticket.serviceScheduledFor).toISOString()
+                      : "none"
+                  }
+                  ticketId={ticketId}
+                  initialScheduledAt={ticket.serviceScheduledFor}
+                />
                 <FollowUpCommunicationCenterCard />
                 <FollowUpRecommendationsCard />
                 <FollowUpQuickActionsCard client={client} />

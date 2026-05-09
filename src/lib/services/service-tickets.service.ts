@@ -10,7 +10,9 @@ import { TenderRepository } from "@/src/lib/repositories/Tender.repo";
 import { TenderClientListDTO } from "../dtos/Tenders.dto";
 import { TenderService } from "./tender.service";
 
-const SERVICE_TICKET_RELATIONS: ("tender" | "organization" | "tender.service" | "tender.customer")[] = [
+
+export type ServiceTicketRelations = ("tender" | "organization" | "tender.service" | "tender.customer");
+const SERVICE_TICKET_RELATIONS: ServiceTicketRelations[] = [
   "tender",
   "organization",
   "tender.service",
@@ -43,11 +45,11 @@ export class ServiceTicketService {
     };
   }
 
-  static async getById(id: number): Promise<ServiceTicket | null> {
+  static async getById(id: number, relations: ServiceTicketRelations[] = SERVICE_TICKET_RELATIONS): Promise<ServiceTicket | null> {
     if (!Number.isFinite(id) || id <= 0) {
       return null;
     }
-    return ServiceTicketRepository.findOneBy({ id }, SERVICE_TICKET_RELATIONS);
+    return ServiceTicketRepository.findOneBy({ id }, relations);
   }
 
   /** One ticket for this org, same relations/serialization as list. */
@@ -118,5 +120,22 @@ export class ServiceTicketService {
     status: ServiceTicketStatus,
   ): Promise<ServiceTicket> {
     return ServiceTicketRepository.update(id, { status });
+  }
+
+  static async setServiceScheduledFor(
+    id: number,
+    serviceScheduledFor: Date | null,
+  ): Promise<ServiceTicket> {
+
+    const ticket = await this.getById(id, []);
+    if (!ticket) {
+      throw new Error("Ticket not found");
+    }
+
+    // if (ticket.status == ServiceTicketStatus.PENDING) {
+    //   return this.update(id, { status: ServiceTicketStatus.CONTACTED, serviceScheduledFor });
+    // }
+
+    return this.update(id, { serviceScheduledFor });
   }
 }

@@ -52,8 +52,8 @@ export default function LeadClientInformationCard({
       <CardContent className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-              <User className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 bg-secondary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <User className="w-5 h-5 text-secondary-400" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
@@ -64,15 +64,15 @@ export default function LeadClientInformationCard({
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-              <Phone className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 bg-secondary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <Phone className="w-5 h-5 text-secondary-400" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Teléfono</Label>
               <p className="font-medium">{localClient.phone}</p>
               <a
                 href={`tel:${localClient.phone}`}
-                className="text-xs text-primary hover:underline"
+                className="text-xs text-slate-400 hover:underline"  
               >
                 Llamar ahora
               </a>
@@ -80,15 +80,15 @@ export default function LeadClientInformationCard({
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-              <Mail className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 bg-secondary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <Mail className="w-5 h-5 text-secondary-400" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">Email</Label>
               <p className="font-medium text-sm">{localClient.email}</p>
               <a
                 href={`mailto:${localClient.email}`}
-                className="text-xs text-primary hover:underline"
+                className="text-xs text-slate-400 hover:underline"
               >
                 Enviar correo
               </a>
@@ -96,8 +96,8 @@ export default function LeadClientInformationCard({
           </div>
 
           <div className="flex items-start gap-3">
-            <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-              <MessageSquare className="w-5 h-5 text-primary" />
+            <div className="w-10 h-10 bg-secondary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+              <MessageSquare className="w-5 h-5 text-secondary-400" />
             </div>
             <div>
               <Label className="text-xs text-muted-foreground">
@@ -108,7 +108,7 @@ export default function LeadClientInformationCard({
                 href={`https://wa.me/${localClient.phone.replace(/[^0-9]/g, "")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-xs text-primary hover:underline"
+                className="text-xs text-slate-400 hover:underline"
               >
                 Abrir WhatsApp
               </a>
@@ -119,8 +119,8 @@ export default function LeadClientInformationCard({
         <Separator />
 
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-            <MapPin className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 bg-secondary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+            <MapPin className="w-5 h-5 text-secondary-400" />
           </div>
           <div className="flex-1">
             <Label className="text-xs text-muted-foreground">
@@ -131,11 +131,9 @@ export default function LeadClientInformationCard({
               href={buildGoogleMapsSearchUrl(localClient)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs text-primary hover:underline"
+              className="mt-1 inline-block text-xs text-slate-400 hover:underline"
             >
-              {hasUsableMapCoordinates(localClient)
-                ? "Ver en Google Maps (coordenadas)"
-                : "Ver en Google Maps (dirección)"}
+              Ver en Google Maps
             </a>
           </div>
         </div>
@@ -143,8 +141,8 @@ export default function LeadClientInformationCard({
         <Separator />
 
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
-            <MapPin className="w-5 h-5 text-primary" />
+          <div className="w-10 h-10 bg-secondary/15 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+            <MapPin className="w-5 h-5 text-secondary-400" />
           </div>
           <div className="flex-1">
             <Label className="text-xs text-muted-foreground">

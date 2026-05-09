@@ -9,6 +9,40 @@ import { OrganizationMemberRepository } from "../repositories/OrganizationMember
 import type { ActionResponse } from "../utils/action-response";
 import { ServiceTicketStatus } from "../enums/service-tickets.enum";
 
+export const _scheduleServiceAppointment = protectedAction(
+  async (
+    _,
+    ticketId: number,
+    serviceScheduledFor: string | null,
+  ): Promise<ActionResponse<ServiceTicketDTO>> => {
+    if (!Number.isFinite(ticketId) || ticketId <= 0) {
+      return { success: false, error: "Identificador de ticket inválido." };
+    }
+
+    let at: Date | null = null;
+    if (
+      serviceScheduledFor != null &&
+      String(serviceScheduledFor).trim() !== ""
+    ) {
+      const parsed = new Date(serviceScheduledFor);
+      if (Number.isNaN(parsed.getTime())) {
+        return { success: false, error: "Fecha u hora inválida." };
+      }
+      at = parsed;
+    }
+
+    try {
+      const ticket = await ServiceTicketService.setServiceScheduledFor(
+        ticketId,
+        at,
+      );
+      return { success: true, data: ServiceTicketService.serialize(ticket) };
+    } catch {
+      return { success: false, error: "No se pudo guardar la cita del servicio." };
+    }
+  },
+);
+
 export const _getTicketsByOrganization = protectedAction(
   async (session, organizationId: number) => {
     const userId = Number(session.user?.id);
@@ -64,3 +98,4 @@ export const _updateTicketStatus = protectedAction(
     return { success: true, data: ServiceTicketService.serialize(ticket) };
   },
 );
+

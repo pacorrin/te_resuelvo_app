@@ -42,13 +42,12 @@ export default function FollowUpStatusManagementCard({
   };
 
   return (
-    <Card>
+    <Card className="gap-2">
       <CardHeader>
-        <CardTitle className="text-base">Gestión de Estado</CardTitle>
+        <CardTitle className="text-base">Estado del servicio</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="status">Estado actual</Label>
           <Select value={String(status)} onValueChange={handleStatusChange}>
             <SelectTrigger id="status">
               <SelectValue />
@@ -84,10 +83,6 @@ export default function FollowUpStatusManagementCard({
           <Button variant="outline" size="sm" className="w-full justify-start">
             <FileText className="mr-2 h-4 w-4" />
             Generar cotización
-          </Button>
-          <Button variant="outline" size="sm" className="w-full justify-start">
-            <Calendar className="mr-2 h-4 w-4" />
-            Reagendar cita
           </Button>
           <Button variant="outline" size="sm" className="w-full justify-start">
             <DollarSign className="mr-2 h-4 w-4" />

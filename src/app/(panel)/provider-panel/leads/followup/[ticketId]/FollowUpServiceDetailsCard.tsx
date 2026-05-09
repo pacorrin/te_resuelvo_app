@@ -80,8 +80,8 @@ export default function FollowUpServiceDetailsCard({
 
         <div className="flex flex-col gap-3">
           <div className="flex flex-row items-center gap-2 mt-0.5">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-              <ClipboardList className="h-5 w-5 text-primary" aria-hidden />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/15">
+              <ClipboardList className="h-5 w-5 text-secondary-400" aria-hidden />
             </div>
             <Label className="text-sm font-medium">Detalles adicionales</Label>
           </div>
