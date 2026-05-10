@@ -11,4 +11,6 @@ export enum FileOwnerType {
   USER = 2,
   SERVICE = 3,
   GENERIC = 4,
+  SERVICE_TICKET_QUOTE = 5,
+  SERVICE_TICKET_INCIDENCE = 6,
 }

@@ -1,5 +1,6 @@
 import { ServiceTicket } from "@/src/lib/entities/ServiceTickets.entity";
 import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
+import type { FileDTO } from "@/src/lib/dtos/File.dto";
 import {
   CreateServiceTicketInput,
   SearchServiceTicket,
@@ -7,7 +8,10 @@ import {
   UpdateServiceTicketInput,
 } from "@/src/lib/repositories/ServiceTickets.repo";
 import { TenderRepository } from "@/src/lib/repositories/Tender.repo";
+import { saveRequestBodyToLocalFile } from "@/src/lib/storage/local-storage.service";
+import { FileCategory, FileOwnerType } from "@/src/lib/storage/storage.enums";
 import { TenderClientListDTO } from "../dtos/Tenders.dto";
+import { FileService } from "./file.service";
 import { TenderService } from "./tender.service";
 
 
@@ -137,5 +141,45 @@ export class ServiceTicketService {
     // }
 
     return this.update(id, { serviceScheduledFor });
+  }
+
+  static async uploadQuote(ticketId: number, file: File): Promise<FileDTO> {
+    const ticket = await ServiceTicketRepository.findOneBy({ id: ticketId }, []);
+    if (!ticket) {
+      throw new Error("Ticket not found");
+    }
+
+    const result = await saveRequestBodyToLocalFile({
+      body: file.stream() as ReadableStream<Uint8Array>,
+      fileName: file.name,
+      folder: "service-tickets/quotes",
+      contentType: file.type || "application/octet-stream",
+      allowExtensions: [
+        "pdf",
+        "doc",
+        "docx",
+        "xls",
+        "xlsx",
+        "jpg",
+        "jpeg",
+        "png",
+        "webp",
+      ],
+      fileMetadata: {
+        category: FileCategory.DOCUMENT,
+        ownerType: FileOwnerType.SERVICE_TICKET_QUOTE,
+        ownerId: ticketId,
+      },
+    });
+
+    if (result.fileId == null) {
+      throw new Error("Failed to persist file record");
+    }
+
+    const dto = await FileService.getById(result.fileId);
+    if (!dto) {
+      throw new Error("File record missing");
+    }
+    return dto;
   }
 }

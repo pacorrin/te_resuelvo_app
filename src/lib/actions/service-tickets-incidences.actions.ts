@@ -1,6 +1,15 @@
 "use server";
 
-import { ServiceTicketIncidenceDTO, ServiceTicketIncidenceService } from "@/src/lib/services/service-ticket-incidence.service";
+import type { FileDTO } from "../dtos/File.dto";
+import { OrganizationMemberRepository } from "../repositories/OrganizationMember.repo";
+import { ServiceTicketIncidenceRepository } from "../repositories/ServiceTicketIncidence.repo";
+import { ServiceTicketService } from "../services/service-tickets.service";
+import {
+  ServiceTicketIncidenceCreateResult,
+  ServiceTicketIncidenceDTO,
+  ServiceTicketIncidenceEvidenceBundleDTO,
+  ServiceTicketIncidenceService,
+} from "@/src/lib/services/service-ticket-incidence.service";
 import { protectedAction } from "../protected-action";
 import type { CreateServiceTicketIncidenceInput } from "../dtos/ServiceTicketIncidence.dto";
 import { getErrorMessage } from "../utils/error";
@@ -10,13 +19,18 @@ export const createServiceTicketIncidence = protectedAction(
   async (
     _,
     { ticketId, type, description }: CreateServiceTicketIncidenceInput,
-  ): Promise<ActionResponse<ServiceTicketIncidenceDTO | null>> => {
+    evidenceFiles: File[] = [],
+  ): Promise<ActionResponse<ServiceTicketIncidenceCreateResult | null>> => {
     try {
-      const incidence = await ServiceTicketIncidenceService.create(ticketId, {
-        type,
-        description,
-      });
-      return { success: true, data: incidence };
+      const result = await ServiceTicketIncidenceService.create(
+        ticketId,
+        { type, description },
+        evidenceFiles,
+      );
+      if (!result) {
+        return { success: false, error: "No se pudo crear la incidencia." };
+      }
+      return { success: true, data: result };
     } catch (error) {
       console.error("Error creating service ticket incidence:", error);
       return { success: false, error: getErrorMessage(error) };
@@ -34,6 +48,96 @@ export const _listServiceTicketIncidences = protectedAction(
       return { success: true, data: incidences };
     } catch (error) {
       console.error("Error listing service ticket incidences:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
+export const _listServiceTicketIncidenceEvidenceForTicket = protectedAction(
+  async (
+    session,
+    ticketId: number,
+  ): Promise<ActionResponse<ServiceTicketIncidenceEvidenceBundleDTO[]>> => {
+    const userId = Number(session.user?.id);
+    if (!Number.isFinite(userId)) {
+      return { success: false, error: "Sesión inválida" };
+    }
+    if (!Number.isFinite(ticketId) || ticketId <= 0) {
+      return { success: false, error: "Identificador de ticket inválido." };
+    }
+    try {
+      const ticket = await ServiceTicketService.getById(ticketId, []);
+      if (!ticket) {
+        return { success: false, error: "Ticket no encontrado." };
+      }
+      const membership = await OrganizationMemberRepository.findOneBy({
+        userId,
+        organizationId: ticket.organizationId,
+      });
+      if (!membership) {
+        return {
+          success: false,
+          error: "No tienes acceso a las evidencias de este ticket.",
+        };
+      }
+      const data =
+        await ServiceTicketIncidenceService.listEvidenceBundlesForTicket(ticketId);
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error listing incidence evidence:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
+export const _uploadServiceTicketIncidenceEvidence = protectedAction(
+  async (
+    session,
+    ticketId: number,
+    incidenceId: number,
+    file: File,
+  ): Promise<ActionResponse<FileDTO>> => {
+    const userId = Number(session.user?.id);
+    if (!Number.isFinite(userId)) {
+      return { success: false, error: "Sesión inválida" };
+    }
+    if (
+      !Number.isFinite(ticketId) ||
+      ticketId <= 0 ||
+      !Number.isFinite(incidenceId) ||
+      incidenceId <= 0
+    ) {
+      return { success: false, error: "Parámetros inválidos." };
+    }
+    try {
+      const inc = await ServiceTicketIncidenceRepository.findOneBy(
+        { id: incidenceId },
+        [],
+      );
+      if (!inc || inc.ticketId !== ticketId) {
+        return { success: false, error: "Incidencia no encontrada." };
+      }
+      const ticket = await ServiceTicketService.getById(ticketId, []);
+      if (!ticket) {
+        return { success: false, error: "Ticket no encontrado." };
+      }
+      const membership = await OrganizationMemberRepository.findOneBy({
+        userId,
+        organizationId: ticket.organizationId,
+      });
+      if (!membership) {
+        return {
+          success: false,
+          error: "No tienes acceso a subir evidencias para este ticket.",
+        };
+      }
+      const data = await ServiceTicketIncidenceService.uploadEvidence(
+        incidenceId,
+        file,
+      );
+      return { success: true, data };
+    } catch (error) {
+      console.error("Error uploading incidence evidence:", error);
       return { success: false, error: getErrorMessage(error) };
     }
   },
