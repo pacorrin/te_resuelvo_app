@@ -305,6 +305,12 @@ export class AddTenders1770967062506 implements MigrationInterface {
             isNullable: false,
           },
           {
+            name: "tickpay_balance_type",
+            type: "smallint",
+            isNullable: false,
+            comment: "Indicates whether the payment is a credit (1 - abono) or a debit (2 - cargo)",
+          },
+          {
             name: "tickpay_amount",
             type: "decimal",
             precision: 10,
@@ -313,12 +319,6 @@ export class AddTenders1770967062506 implements MigrationInterface {
           },
           {
             name: "tickpay_description",
-            type: "varchar",
-            length: "150",
-            isNullable: true,
-          },
-          {
-            name: "tickpay_image",
             type: "varchar",
             length: "150",
             isNullable: true,

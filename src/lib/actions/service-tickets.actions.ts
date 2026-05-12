@@ -11,7 +11,14 @@ import { OrganizationMemberRepository } from "../repositories/OrganizationMember
 import { FileOwnerType } from "../storage/storage.enums";
 import type { ActionResponse } from "../utils/action-response";
 import { getErrorMessage } from "../utils/error";
-import { ServiceTicketStatus } from "../enums/service-tickets.enum";
+import {
+  ServiceTicketPaymentBalanceType,
+  ServiceTicketStatus,
+} from "../enums/service-tickets.enum";
+import {
+  ServiceTicketPaymentService,
+  type ServiceTicketPaymentDTO,
+} from "../services/service-ticket-payment.service";
 
 export const _scheduleServiceAppointment = protectedAction(
   async (
@@ -195,6 +202,107 @@ export const _uploadServiceTicketQuote = protectedAction(
       return { success: true, data };
     } catch (error) {
       console.error("Error uploading service ticket quote:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
+async function assertUserCanAccessServiceTicket(
+  userId: number,
+  ticketId: number,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (!Number.isFinite(ticketId) || ticketId <= 0) {
+    return { ok: false, error: "Identificador de ticket inválido." };
+  }
+  const ticket = await ServiceTicketService.getById(ticketId, []);
+  if (!ticket) {
+    return { ok: false, error: "Ticket no encontrado." };
+  }
+  const membership = await OrganizationMemberRepository.findOneBy({
+    userId,
+    organizationId: ticket.organizationId,
+  });
+  if (!membership) {
+    return { ok: false, error: "No tienes acceso a este ticket." };
+  }
+  return { ok: true };
+}
+
+export const _listServiceTicketPayments = protectedAction(
+  async (
+    session,
+    ticketId: number,
+  ): Promise<ActionResponse<ServiceTicketPaymentDTO[]>> => {
+    const userId = Number(session.user?.id);
+    if (!Number.isFinite(userId)) {
+      return { success: false, error: "Sesión inválida" };
+    }
+    try {
+      const access = await assertUserCanAccessServiceTicket(userId, ticketId);
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
+      const rows = await ServiceTicketPaymentService.listByTicket(ticketId);
+      return { success: true, data: rows };
+    } catch (error) {
+      console.error("Error listing service ticket payments:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
+export const _createServiceTicketPayment = protectedAction(
+  async (
+    session,
+    ticketId: number,
+    input: {
+      balanceType: ServiceTicketPaymentBalanceType;
+      amount: number;
+      description?: string | null;
+    },
+  ): Promise<ActionResponse<ServiceTicketPaymentDTO>> => {
+    const userId = Number(session.user?.id);
+    if (!Number.isFinite(userId)) {
+      return { success: false, error: "Sesión inválida" };
+    }
+    const balanceType = Number(input.balanceType);
+    if (
+      balanceType !== ServiceTicketPaymentBalanceType.CREDIT &&
+      balanceType !== ServiceTicketPaymentBalanceType.DEBIT
+    ) {
+      return { success: false, error: "Tipo de movimiento inválido." };
+    }
+    const rawAmount = Number(input.amount);
+    if (!Number.isFinite(rawAmount) || rawAmount <= 0) {
+      return { success: false, error: "El monto debe ser mayor que cero." };
+    }
+    const amount = Math.round(rawAmount * 100) / 100;
+    if (amount > 99_999_999.99) {
+      return { success: false, error: "Monto demasiado grande." };
+    }
+    let description: string | null =
+      input.description != null && String(input.description).trim() !== ""
+        ? String(input.description).trim()
+        : null;
+    if (description && description.length > 150) {
+      description = description.slice(0, 150);
+    }
+    try {
+      const access = await assertUserCanAccessServiceTicket(userId, ticketId);
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
+      const created = await ServiceTicketPaymentService.create(ticketId, {
+        balanceType,
+        amount,
+        description,
+      });
+      if (!created) {
+        return { success: false, error: "No se pudo registrar el movimiento." };
+      }
+      return { success: true, data: created };
+    } catch (error) {
+      console.error("Error creating service ticket payment:", error);
       return { success: false, error: getErrorMessage(error) };
     }
   },

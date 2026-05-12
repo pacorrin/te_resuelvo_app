@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useFollowUpTicketStatus } from "./FollowUpTicketStatus";
-import { CheckCircle, DollarSign, ExternalLink, FileText } from "lucide-react";
+import { CheckCircle, DollarSign, FileText } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
   Card,
@@ -25,6 +25,7 @@ import {
   _updateTicketStatus,
   _uploadServiceTicketQuote,
 } from "@/src/lib/actions/service-tickets.actions";
+import { ServiceTicketPaymentsModal } from "./ServiceTicketPaymentsModal";
 import type { FileDTO } from "@/src/lib/dtos/File.dto";
 import { toastError, toastSuccess } from "@/src/lib/utils";
 
@@ -50,6 +51,7 @@ export default function FollowUpStatusManagementCard({
   const quoteInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingQuote, setIsUploadingQuote] = useState(false);
   const [quoteFile, setQuoteFile] = useState<FileDTO | null>(null);
+  const [paymentsModalOpen, setPaymentsModalOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,97 +113,110 @@ export default function FollowUpStatusManagementCard({
   };
 
   return (
-    <Card className="gap-2">
-      <CardHeader>
-        <CardTitle className="text-base">Estado del servicio</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <input
-          ref={quoteInputRef}
-          type="file"
-          accept={QUOTE_ACCEPT}
-          className="sr-only"
-          aria-hidden
-          tabIndex={-1}
-          onChange={onQuoteFileChange}
-        />
-        <div className="space-y-2">
-          <Select value={String(status)} onValueChange={handleStatusChange}>
-            <SelectTrigger id="status">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {status == ServiceTicketStatus.PENDING && (
-                <SelectItem value={ServiceTicketStatus.PENDING.toString()}>
-                  Pendiente
+    <>
+      <Card className="gap-2">
+        <CardHeader>
+          <CardTitle className="text-base">Estado del servicio</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <input
+            ref={quoteInputRef}
+            type="file"
+            accept={QUOTE_ACCEPT}
+            className="sr-only"
+            aria-hidden
+            tabIndex={-1}
+            onChange={onQuoteFileChange}
+          />
+          <div className="space-y-2">
+            <Select value={String(status)} onValueChange={handleStatusChange}>
+              <SelectTrigger id="status">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {status == ServiceTicketStatus.PENDING && (
+                  <SelectItem value={ServiceTicketStatus.PENDING.toString()}>
+                    Pendiente
+                  </SelectItem>
+                )}
+                <SelectItem value={ServiceTicketStatus.CONTACTED.toString()}>
+                  Contactado
                 </SelectItem>
-              )}
-              <SelectItem value={ServiceTicketStatus.CONTACTED.toString()}>
-                Contactado
-              </SelectItem>
-              <SelectItem value={ServiceTicketStatus.QUOTED.toString()}>
-                Cotizado
-              </SelectItem>
-              <SelectItem value={ServiceTicketStatus.IN_PROGRESS.toString()}>
-                En progreso
-              </SelectItem>
-              <SelectItem value={ServiceTicketStatus.COMPLETED.toString()}>
-                Completado
-              </SelectItem>
-              <SelectItem value={ServiceTicketStatus.CANCELLED.toString()}>
-                Cancelado
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+                <SelectItem value={ServiceTicketStatus.QUOTED.toString()}>
+                  Cotizado
+                </SelectItem>
+                <SelectItem value={ServiceTicketStatus.IN_PROGRESS.toString()}>
+                  En progreso
+                </SelectItem>
+                <SelectItem value={ServiceTicketStatus.COMPLETED.toString()}>
+                  Completado
+                </SelectItem>
+                <SelectItem value={ServiceTicketStatus.CANCELLED.toString()}>
+                  Cancelado
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-        <Separator />
+          <Separator />
 
-        <div className="space-y-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="w-full justify-start"
-            onClick={() =>
-              quoteFile ? openQuoteInNewTab() : openQuoteFilePicker()
-            }
-            disabled={isUploadingQuote}
-            title={
-              quoteFile
-                ? "Abrir la cotización en una pestaña nueva"
-                : "Elegir archivo de cotización"
-            }
-          >
-            {isUploadingQuote ? (
-              <Spinner className="mr-2 size-4 shrink-0" />
-            ) : quoteFile ? (
-              <CheckCircle className="mr-2 size-4 shrink-0 text-green-500" />
-            ) : (
-              <FileText className="mr-2 h-4 w-4 shrink-0" />
-            )}
-            {isUploadingQuote
-              ? "Subiendo…"
-              : quoteFile
-                ? "Ver cotización"
-                : "Subir cotización"}
-          </Button>
-          {quoteFile ? (
-            <button
+          <div className="space-y-2">
+            <Button
               type="button"
-              className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline disabled:opacity-50"
-              onClick={openQuoteFilePicker}
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() =>
+                quoteFile ? openQuoteInNewTab() : openQuoteFilePicker()
+              }
               disabled={isUploadingQuote}
+              title={
+                quoteFile
+                  ? "Abrir la cotización en una pestaña nueva"
+                  : "Elegir archivo de cotización"
+              }
             >
-              Subir una cotización nueva
-            </button>
-          ) : null}
-          <Button variant="outline" size="sm" className="w-full justify-start">
-            <DollarSign className="mr-2 h-4 w-4" />
-            Registrar pago
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+              {isUploadingQuote ? (
+                <Spinner className="mr-2 size-4 shrink-0" />
+              ) : quoteFile ? (
+                <CheckCircle className="mr-2 size-4 shrink-0 text-green-500" />
+              ) : (
+                <FileText className="mr-2 h-4 w-4 shrink-0" />
+              )}
+              {isUploadingQuote
+                ? "Subiendo…"
+                : quoteFile
+                  ? "Ver cotización"
+                  : "Subir cotización"}
+            </Button>
+            {quoteFile ? (
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground underline-offset-4 hover:underline disabled:opacity-50"
+                onClick={openQuoteFilePicker}
+                disabled={isUploadingQuote}
+              >
+                Subir una cotización nueva
+              </button>
+            ) : null}
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full justify-start"
+              onClick={() => setPaymentsModalOpen(true)}
+            >
+              <DollarSign className="mr-2 h-4 w-4" />
+              Registrar pago
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+      <ServiceTicketPaymentsModal
+        ticketId={ticketId}
+        open={paymentsModalOpen}
+        onOpenChange={setPaymentsModalOpen}
+      />
+    </>
   );
 }

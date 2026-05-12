@@ -7,10 +7,16 @@ export enum ServiceTicketStatus {
   CANCELLED = 6,
 }
 
-/** `service_tickets_incidences.tick_type` (smallint). */
 export enum ServiceTicketIncidenceType {
   NOTA = 1,
   PROBLEMA = 2,
   RETRASO = 3,
   CANCELACION = 4,
+}
+
+export enum ServiceTicketPaymentBalanceType {
+  /** ABONO / payment toward balance */
+  CREDIT = 1,
+  /** CARGO / charge */
+  DEBIT = 2,
 }
