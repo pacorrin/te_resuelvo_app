@@ -15,6 +15,7 @@ import { QuestionSetAnswer } from "../entities/QuestionSetAnswer.entity";
 import { ServiceTicket } from "../entities/ServiceTickets.entity";
 import { ServiceTicketIncidence } from "../entities/ServiceTicketIncidence.entity";
 import { ServiceTicketPayment } from "../entities/ServiceTicketPayment.entity";
+import { ServiceTicketStatusHistory } from "../entities/ServiceTicketStatusHistory.entity";
 
 let AppDataSourceInstance: DataSource;
 
@@ -45,6 +46,7 @@ try {
       ServiceTicket,
       ServiceTicketIncidence,
       ServiceTicketPayment,
+      ServiceTicketStatusHistory,
     ],
     subscribers: [],
   });

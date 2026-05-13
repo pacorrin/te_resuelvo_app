@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { CalendarClock, ChevronDownIcon } from "lucide-react";
+import { CalendarClock, ChevronDownIcon, CheckCircle2 } from "lucide-react";
 
 import { Button } from "@/src/components/ui/button";
 import { Calendar } from "@/src/components/ui/calendar";
@@ -27,8 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/src/components/ui/select";
-import { _scheduleServiceAppointment } from "@/src/lib/actions/service-tickets.actions";
+import {
+  _recordServiceTicketVisitCompleted,
+  _scheduleServiceAppointment,
+} from "@/src/lib/actions/service-tickets.actions";
+import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
 import { toastError, toastSuccess } from "@/src/lib/utils";
+
+import { useFollowUpTicketStatus } from "./FollowUpTicketStatus";
 
 function parseInitialDate(
   value: Date | string | null | undefined,
@@ -128,6 +134,7 @@ function toAppointmentUtcIso(date: Date, timeHHmm: string): string | null {
 type FollowUpScheduleAppointmentCardProps = {
   ticketId: number;
   initialScheduledAt: Date | string | null;
+  initialVisitCompleted: boolean;
 };
 
 function hasScheduledBackendValue(
@@ -152,10 +159,14 @@ function scheduledAtKey(value: Date | string | null | undefined): string {
 export default function FollowUpScheduleAppointmentCard({
   ticketId,
   initialScheduledAt,
+  initialVisitCompleted,
 }: FollowUpScheduleAppointmentCardProps) {
   const router = useRouter();
+  const { status: ticketStatus } = useFollowUpTicketStatus();
+  const schedulingLockedByTicketStatus =
+    ticketStatus === ServiceTicketStatus.COMPLETED ||
+    ticketStatus === ServiceTicketStatus.CANCELLED;
   const initialForm = applyScheduledAtToForm(initialScheduledAt);
-  /** Editable form vs read-only summary (new ticket or after “Reagendar”). */
   const [isEditing, setIsEditing] = useState(() => initialForm.date == null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
@@ -165,10 +176,16 @@ export default function FollowUpScheduleAppointmentCard({
   const [minute, setMinute] = useState(initialForm.minute);
   const [meridiem, setMeridiem] = useState<Meridiem>(initialForm.meridiem);
   const [saving, setSaving] = useState(false);
+  const [visitCompleted, setVisitCompleted] = useState(initialVisitCompleted);
+  const [markingVisit, setMarkingVisit] = useState(false);
   const serverHasAppointment = hasScheduledBackendValue(initialScheduledAt);
   const isEditingRef = useRef(isEditing);
   isEditingRef.current = isEditing;
   const initialKey = scheduledAtKey(initialScheduledAt);
+
+  useEffect(() => {
+    setVisitCompleted(initialVisitCompleted);
+  }, [initialVisitCompleted]);
 
   useEffect(() => {
     if (isEditingRef.current) return;
@@ -181,6 +198,24 @@ export default function FollowUpScheduleAppointmentCard({
       setIsEditing(true);
     }
   }, [initialKey, initialScheduledAt]);
+
+  const handleMarkVisitCompleted = async () => {
+    setMarkingVisit(true);
+    try {
+      const result = await _recordServiceTicketVisitCompleted(ticketId);
+      if (result.success) {
+        setVisitCompleted(true);
+        toastSuccess("Visita marcada como realizada.");
+        router.refresh();
+      } else {
+        toastError(
+          result.error ?? "No se pudo registrar la visita como realizada.",
+        );
+      }
+    } finally {
+      setMarkingVisit(false);
+    }
+  };
 
   const handleSave = async () => {
     let iso: string | null = null;
@@ -257,6 +292,61 @@ export default function FollowUpScheduleAppointmentCard({
   const showReadOnly =
     !isEditing && selectedDate != null;
 
+  const lockedSummary = applyScheduledAtToForm(initialScheduledAt);
+
+  if (visitCompleted) {
+    return (
+      <Card className="gap-2 border-muted bg-muted/20">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-secondary-400" />
+            Programar cita del servicio
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 flex items-start gap-3 dark:bg-blue-950/30 dark:border-blue-900/40">
+            <div>
+              <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-blue-300 mt-0.5 shrink-0" />
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-1">
+                Visita completada
+              </h3>
+              <p className="text-xs text-blue-900 dark:text-blue-200">
+                La visita ya fue registrada como realizada.
+              </p>
+            </div>
+          </div>
+          {hasScheduledBackendValue(initialScheduledAt) &&
+          lockedSummary.date != null ? (
+            <div
+              className="rounded-lg border border-border/80 bg-muted/35 px-4 py-4 space-y-4 text-sm"
+              aria-readonly="true"
+            >
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Cita registrada
+                </p>
+                <p className="text-base font-medium leading-snug">
+                  {format(lockedSummary.date, "PPP", { locale: es })}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Hora
+                </p>
+                <p className="text-base font-medium leading-snug tabular-nums">
+                  {lockedSummary.hour12}:{lockedSummary.minute}{" "}
+                  {meridiemLabel(lockedSummary.meridiem)}
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="gap-2">
       <CardHeader>
@@ -289,12 +379,29 @@ export default function FollowUpScheduleAppointmentCard({
                 </p>
               </div>
             </div>
+            {serverHasAppointment ? (
+              <Button
+                type="button"
+                size="lg"
+                className="w-full"
+                onClick={handleMarkVisitCompleted}
+                disabled={saving || markingVisit || schedulingLockedByTicketStatus}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {markingVisit ? "Guardando…" : "Marcar visita como realizada"}
+              </Button>
+            ) : null}
             <Button
               type="button"
               size="lg"
+              variant="secondary"
               className="w-full"
               onClick={() => setIsEditing(true)}
-              disabled={saving}
+              disabled={
+                saving ||
+                markingVisit ||
+                schedulingLockedByTicketStatus
+              }
             >
               Reagendar cita
             </Button>
@@ -303,7 +410,12 @@ export default function FollowUpScheduleAppointmentCard({
               variant="outline"
               className="w-full"
               onClick={handleClear}
-              disabled={saving || !canClear}
+              disabled={
+                saving ||
+                !canClear ||
+                markingVisit ||
+                schedulingLockedByTicketStatus
+              }
             >
               Quitar cita
             </Button>
@@ -319,7 +431,7 @@ export default function FollowUpScheduleAppointmentCard({
                       type="button"
                       variant="outline"
                       id="service-appointment-date"
-                      disabled={saving}
+                      disabled={saving || schedulingLockedByTicketStatus}
                       className="w-full justify-between font-normal"
                     >
                       {selectedDate
@@ -351,7 +463,7 @@ export default function FollowUpScheduleAppointmentCard({
                   <Select
                     value={hour12}
                     onValueChange={setHour12}
-                    disabled={saving}
+                    disabled={saving || schedulingLockedByTicketStatus}
                   >
                     <SelectTrigger
                       id="service-appointment-hour"
@@ -371,7 +483,7 @@ export default function FollowUpScheduleAppointmentCard({
                   <Select
                     value={minute}
                     onValueChange={setMinute}
-                    disabled={saving}
+                    disabled={saving || schedulingLockedByTicketStatus}
                   >
                     <SelectTrigger
                       id="service-appointment-minute"
@@ -391,7 +503,7 @@ export default function FollowUpScheduleAppointmentCard({
                   <Select
                     value={meridiem}
                     onValueChange={(v) => setMeridiem(v as Meridiem)}
-                    disabled={saving}
+                    disabled={saving || schedulingLockedByTicketStatus}
                   >
                     <SelectTrigger
                       id="service-appointment-meridiem"
@@ -413,7 +525,7 @@ export default function FollowUpScheduleAppointmentCard({
                 type="button"
                 className="flex-1 min-w-[8rem]"
                 onClick={handleSave}
-                disabled={saving}
+                disabled={saving || schedulingLockedByTicketStatus}
               >
                 {saving ? "Guardando…" : "Guardar"}
               </Button>
@@ -423,7 +535,7 @@ export default function FollowUpScheduleAppointmentCard({
                   variant="secondary"
                   className="flex-1 min-w-[8rem]"
                   onClick={handleCancelReschedule}
-                  disabled={saving}
+                  disabled={saving || schedulingLockedByTicketStatus}
                 >
                   Cancelar
                 </Button>

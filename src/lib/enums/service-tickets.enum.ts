@@ -20,3 +20,13 @@ export enum ServiceTicketPaymentBalanceType {
   /** CARGO / charge */
   DEBIT = 2,
 }
+
+export enum ServiceTicketStatusHistoryEventType {
+  FIRST_CONTACT = 1,
+  VISIT_SCHEDULED = 2,
+  VISIT_COMPLETED = 3,
+  QUOTE_SENT = 4,
+  WORK_IN_PROGRESS = 5,
+  WORK_COMPLETED = 6,
+  WORK_CANCELLED = 7,
+}

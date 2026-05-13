@@ -12,10 +12,11 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/src/components/ui/card";
 import { Label } from "@/src/components/ui/label";
 import { Separator } from "@/src/components/ui/separator";
+import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
 import {
   buildGoogleMapsSearchUrl,
-  hasUsableMapCoordinates,
 } from "./leadClientMaps";
+import { useFollowUpTicketStatus } from "./FollowUpTicketStatus";
 
 export type LeadClientData = {
   name: string;
@@ -34,6 +35,12 @@ export default function LeadClientInformationCard({
 }: {
   client: LeadClientData;
 }) {
+  const { status } = useFollowUpTicketStatus();
+  const ticketStatus = Number(status) as ServiceTicketStatus;
+  const hideClientActionLinks =
+    ticketStatus === ServiceTicketStatus.COMPLETED ||
+    ticketStatus === ServiceTicketStatus.CANCELLED;
+
   // Keep a local copy so the card can evolve independently (e.g. inline edits later).
   const [localClient, setLocalClient] = useState(client);
 
@@ -70,12 +77,14 @@ export default function LeadClientInformationCard({
             <div>
               <Label className="text-xs text-muted-foreground">Teléfono</Label>
               <p className="font-medium">{localClient.phone}</p>
-              <a
-                href={`tel:${localClient.phone}`}
-                className="text-xs text-slate-400 hover:underline"  
-              >
-                Llamar ahora
-              </a>
+              {!hideClientActionLinks ? (
+                <a
+                  href={`tel:${localClient.phone}`}
+                  className="text-xs text-slate-400 hover:underline"
+                >
+                  Llamar ahora
+                </a>
+              ) : null}
             </div>
           </div>
 
@@ -86,12 +95,14 @@ export default function LeadClientInformationCard({
             <div>
               <Label className="text-xs text-muted-foreground">Email</Label>
               <p className="font-medium text-sm">{localClient.email}</p>
-              <a
-                href={`mailto:${localClient.email}`}
-                className="text-xs text-slate-400 hover:underline"
-              >
-                Enviar correo
-              </a>
+              {!hideClientActionLinks ? (
+                <a
+                  href={`mailto:${localClient.email}`}
+                  className="text-xs text-slate-400 hover:underline"
+                >
+                  Enviar correo
+                </a>
+              ) : null}
             </div>
           </div>
 
@@ -104,14 +115,16 @@ export default function LeadClientInformationCard({
                 Contacto preferido
               </Label>
               <p className="font-medium">{localClient.preferredContact}</p>
-              <a
-                href={`https://wa.me/${localClient.phone.replace(/[^0-9]/g, "")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-slate-400 hover:underline"
-              >
-                Abrir WhatsApp
-              </a>
+              {!hideClientActionLinks ? (
+                <a
+                  href={`https://wa.me/${localClient.phone.replace(/[^0-9]/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-slate-400 hover:underline"
+                >
+                  Abrir WhatsApp
+                </a>
+              ) : null}
             </div>
           </div>
         </div>
@@ -127,14 +140,16 @@ export default function LeadClientInformationCard({
               Dirección del servicio
             </Label>
             <p className="font-medium">{localClient.address}</p>
-            <a
-              href={buildGoogleMapsSearchUrl(localClient)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 inline-block text-xs text-slate-400 hover:underline"
-            >
-              Ver en Google Maps
-            </a>
+            {!hideClientActionLinks ? (
+              <a
+                href={buildGoogleMapsSearchUrl(localClient)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-xs text-slate-400 hover:underline"
+              >
+                Ver en Google Maps
+              </a>
+            ) : null}
           </div>
         </div>
 

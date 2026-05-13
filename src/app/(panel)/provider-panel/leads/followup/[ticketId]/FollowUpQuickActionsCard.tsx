@@ -9,8 +9,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/src/components/ui/card";
+import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
 import type { LeadClientData } from "./LeadClientInformationCard";
 import { buildGoogleMapsSearchUrl } from "./leadClientMaps";
+import { useFollowUpTicketStatus } from "./FollowUpTicketStatus";
 
 export type FollowUpQuickActionsClient = Pick<
   LeadClientData,
@@ -22,6 +24,12 @@ export default function FollowUpQuickActionsCard({
 }: {
   client: FollowUpQuickActionsClient;
 }) {
+  const { status } = useFollowUpTicketStatus();
+  const ticketStatus = Number(status) as ServiceTicketStatus;
+  const quickActionsLocked =
+    ticketStatus === ServiceTicketStatus.COMPLETED ||
+    ticketStatus === ServiceTicketStatus.CANCELLED;
+
   const links = useMemo(
     () => ({
       whatsapp: `https://wa.me/${client.phone.replace(/[^0-9]/g, "")}`,
@@ -48,6 +56,7 @@ export default function FollowUpQuickActionsCard({
           variant="outline"
           size="sm"
           className="w-full justify-start"
+          disabled={quickActionsLocked}
           onClick={() => window.open(links.whatsapp, "_blank")}
         >
           <MessageSquare className="mr-2 h-4 w-4" />
@@ -57,6 +66,7 @@ export default function FollowUpQuickActionsCard({
           variant="outline"
           size="sm"
           className="w-full justify-start"
+          disabled={quickActionsLocked}
           onClick={() => window.open(links.tel, "_blank")}
         >
           <Phone className="mr-2 h-4 w-4" />
@@ -66,6 +76,7 @@ export default function FollowUpQuickActionsCard({
           variant="outline"
           size="sm"
           className="w-full justify-start"
+          disabled={quickActionsLocked}
           onClick={() => window.open(links.mailto, "_blank")}
         >
           <Mail className="mr-2 h-4 w-4" />
@@ -75,6 +86,7 @@ export default function FollowUpQuickActionsCard({
           variant="outline"
           size="sm"
           className="w-full justify-start"
+          disabled={quickActionsLocked}
           onClick={() => window.open(links.maps, "_blank")}
         >
           <MapPin className="mr-2 h-4 w-4" />

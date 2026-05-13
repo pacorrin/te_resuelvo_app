@@ -5,6 +5,15 @@ import { useFollowUpTicketStatus } from "./FollowUpTicketStatus";
 import { CheckCircle, DollarSign, FileText } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
 import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/src/components/ui/alert-dialog";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -40,6 +49,53 @@ function normalizeQuoteFileDto(f: FileDTO): FileDTO {
 const QUOTE_ACCEPT =
   ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,image/jpeg,image/png,image/webp";
 
+/** Forward-only order for the service lifecycle (excludes cancel). */
+const SERVICE_STATUS_PIPELINE: ServiceTicketStatus[] = [
+  ServiceTicketStatus.PENDING,
+  ServiceTicketStatus.CONTACTED,
+  ServiceTicketStatus.QUOTED,
+  ServiceTicketStatus.IN_PROGRESS,
+  ServiceTicketStatus.COMPLETED,
+];
+
+function serviceStatusLabel(s: ServiceTicketStatus): string {
+  switch (s) {
+    case ServiceTicketStatus.PENDING:
+      return "Pendiente";
+    case ServiceTicketStatus.CONTACTED:
+      return "Contactado";
+    case ServiceTicketStatus.QUOTED:
+      return "Cotizado";
+    case ServiceTicketStatus.IN_PROGRESS:
+      return "En progreso";
+    case ServiceTicketStatus.COMPLETED:
+      return "Completado";
+    case ServiceTicketStatus.CANCELLED:
+      return "Cancelado";
+    default:
+      return String(s);
+  }
+}
+
+function selectableStatusesForLinearProcess(
+  current: ServiceTicketStatus,
+): ServiceTicketStatus[] {
+  if (
+    current === ServiceTicketStatus.COMPLETED ||
+    current === ServiceTicketStatus.CANCELLED
+  ) {
+    return [current];
+  }
+  const idx = SERVICE_STATUS_PIPELINE.indexOf(current);
+  if (idx < 0) {
+    return [current, ServiceTicketStatus.CANCELLED];
+  }
+  return [
+    ...SERVICE_STATUS_PIPELINE.slice(idx),
+    ServiceTicketStatus.CANCELLED,
+  ];
+}
+
 type FollowUpStatusManagementCardProps = {
   ticketId: number;
 };
@@ -52,6 +108,19 @@ export default function FollowUpStatusManagementCard({
   const [isUploadingQuote, setIsUploadingQuote] = useState(false);
   const [quoteFile, setQuoteFile] = useState<FileDTO | null>(null);
   const [paymentsModalOpen, setPaymentsModalOpen] = useState(false);
+  const [terminalConfirmOpen, setTerminalConfirmOpen] = useState(false);
+  const [pendingTerminalStatus, setPendingTerminalStatus] =
+    useState<ServiceTicketStatus | null>(null);
+  const [confirmingTerminal, setConfirmingTerminal] = useState(false);
+  const prevTerminalDialogOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (prevTerminalDialogOpenRef.current && !terminalConfirmOpen) {
+      setPendingTerminalStatus(null);
+      setConfirmingTerminal(false);
+    }
+    prevTerminalDialogOpenRef.current = terminalConfirmOpen;
+  }, [terminalConfirmOpen]);
 
   useEffect(() => {
     let cancelled = false;
@@ -69,13 +138,61 @@ export default function FollowUpStatusManagementCard({
     };
   }, [ticketId]);
 
-  const handleStatusChange = async (value: string) => {
+  const ticketStatus = Number(status) as ServiceTicketStatus;
+  const statusSelectLocked =
+    ticketStatus === ServiceTicketStatus.COMPLETED ||
+    ticketStatus === ServiceTicketStatus.CANCELLED;
+  const selectableStatuses =
+    selectableStatusesForLinearProcess(ticketStatus);
+
+  const applyStatusUpdate = async (
+    nextStatus: ServiceTicketStatus,
+  ): Promise<boolean> => {
+    try {
+      const result = await _updateTicketStatus(ticketId, nextStatus);
+      if (result && result.success === true) {
+        setStatus(nextStatus);
+        return true;
+      }
+      toastError(
+        result?.error ?? "No se pudo actualizar el estado del ticket.",
+      );
+      return false;
+    } catch (e) {
+      toastError(
+        e instanceof Error ? e.message : "No se pudo actualizar el estado del ticket.",
+      );
+      return false;
+    }
+  };
+
+  const handleStatusChange = (value: string) => {
+    if (statusSelectLocked) return;
+    if (value === "") return;
     const nextStatus = Number(value) as ServiceTicketStatus;
-    const result = await _updateTicketStatus(ticketId, nextStatus);
-    if (result.success) {
-      setStatus(nextStatus);
-    } else {
-      toastError(result.error ?? "No se pudo actualizar el estado del ticket.");
+    if (!Number.isFinite(nextStatus)) return;
+    if (
+      nextStatus === ServiceTicketStatus.COMPLETED ||
+      nextStatus === ServiceTicketStatus.CANCELLED
+    ) {
+      setPendingTerminalStatus(nextStatus);
+      setTerminalConfirmOpen(true);
+      return;
+    }
+    void applyStatusUpdate(nextStatus);
+  };
+
+  const confirmPendingTerminalStatus = async () => {
+    if (pendingTerminalStatus == null) return;
+    setConfirmingTerminal(true);
+    try {
+      const ok = await applyStatusUpdate(pendingTerminalStatus);
+      if (ok) {
+        setTerminalConfirmOpen(false);
+        setPendingTerminalStatus(null);
+      }
+    } finally {
+      setConfirmingTerminal(false);
     }
   };
 
@@ -129,31 +246,23 @@ export default function FollowUpStatusManagementCard({
             onChange={onQuoteFileChange}
           />
           <div className="space-y-2">
-            <Select value={String(status)} onValueChange={handleStatusChange}>
-              <SelectTrigger id="status">
+            <Select
+              value={String(ticketStatus)}
+              onValueChange={handleStatusChange}
+              disabled={statusSelectLocked}
+            >
+              <SelectTrigger
+                id="status"
+                className="w-full min-w-0"
+              >
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {status == ServiceTicketStatus.PENDING && (
-                  <SelectItem value={ServiceTicketStatus.PENDING.toString()}>
-                    Pendiente
+                {selectableStatuses.map((s) => (
+                  <SelectItem key={s} value={String(s)}>
+                    {serviceStatusLabel(s)}
                   </SelectItem>
-                )}
-                <SelectItem value={ServiceTicketStatus.CONTACTED.toString()}>
-                  Contactado
-                </SelectItem>
-                <SelectItem value={ServiceTicketStatus.QUOTED.toString()}>
-                  Cotizado
-                </SelectItem>
-                <SelectItem value={ServiceTicketStatus.IN_PROGRESS.toString()}>
-                  En progreso
-                </SelectItem>
-                <SelectItem value={ServiceTicketStatus.COMPLETED.toString()}>
-                  Completado
-                </SelectItem>
-                <SelectItem value={ServiceTicketStatus.CANCELLED.toString()}>
-                  Cancelado
-                </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -217,6 +326,47 @@ export default function FollowUpStatusManagementCard({
         open={paymentsModalOpen}
         onOpenChange={setPaymentsModalOpen}
       />
+
+      <AlertDialog
+        open={terminalConfirmOpen}
+        onOpenChange={setTerminalConfirmOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {pendingTerminalStatus === ServiceTicketStatus.COMPLETED
+                ? "¿Marcar el servicio como completado?"
+                : "¿Cancelar este servicio?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {pendingTerminalStatus === ServiceTicketStatus.COMPLETED
+                ? "El ticket quedará en estado Completado. Esta acción no se puede deshacer desde aquí."
+                : "El ticket quedará en estado Cancelado. Esta acción no se puede deshacer desde aquí."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={confirmingTerminal}>
+              Volver
+            </AlertDialogCancel>
+            <Button
+              type="button"
+              variant={
+                pendingTerminalStatus === ServiceTicketStatus.CANCELLED
+                  ? "destructive"
+                  : "default"
+              }
+              disabled={confirmingTerminal || pendingTerminalStatus == null}
+              onClick={() => void confirmPendingTerminalStatus()}
+            >
+              {confirmingTerminal
+                ? "Guardando…"
+                : pendingTerminalStatus === ServiceTicketStatus.COMPLETED
+                  ? "Sí, completar"
+                  : "Sí, cancelar"}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

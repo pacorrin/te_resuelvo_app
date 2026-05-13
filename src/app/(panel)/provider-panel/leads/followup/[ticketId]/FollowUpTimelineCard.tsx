@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
 import {
   Calendar,
   CheckCircle,
   DollarSign,
   FileText,
+  Hammer,
   MapPin,
   MessageSquare,
 } from "lucide-react";
@@ -18,6 +19,8 @@ import {
 } from "@/src/components/ui/card";
 import { Separator } from "@/src/components/ui/separator";
 import { Progress } from "@/src/components/ui/progress";
+import type { ServiceTicketStatusHistoryDTO } from "@/src/lib/dtos/ServiceTicketStatusHistory.dto";
+import { ServiceTicketStatusHistoryEventType } from "@/src/lib/enums/service-tickets.enum";
 
 export type FollowUpTimelineStep = {
   id: number;
@@ -26,6 +29,7 @@ export type FollowUpTimelineStep = {
   description: string;
   icon: LucideIcon;
   completed: boolean;
+  eventType?: ServiceTicketStatusHistoryEventType;
 };
 
 const INITIAL_TIMELINE: FollowUpTimelineStep[] = [
@@ -41,9 +45,10 @@ const INITIAL_TIMELINE: FollowUpTimelineStep[] = [
     id: 2,
     date: "15 Ene, 11:00 AM",
     title: "Primer contacto",
-    description: "Contactaste al cliente por WhatsApp",
+    description: "Contactaste al cliente",
     icon: MessageSquare,
     completed: true,
+    eventType: ServiceTicketStatusHistoryEventType.FIRST_CONTACT,
   },
   {
     id: 3,
@@ -52,6 +57,7 @@ const INITIAL_TIMELINE: FollowUpTimelineStep[] = [
     description: "Agendaste visita para mañana a las 2:00 PM",
     icon: Calendar,
     completed: true,
+    eventType: ServiceTicketStatusHistoryEventType.VISIT_SCHEDULED,
   },
   {
     id: 4,
@@ -60,27 +66,104 @@ const INITIAL_TIMELINE: FollowUpTimelineStep[] = [
     description: "Visita al domicilio del cliente",
     icon: MapPin,
     completed: false,
+    eventType: ServiceTicketStatusHistoryEventType.VISIT_COMPLETED,
   },
   {
     id: 5,
     date: "Pendiente",
-    title: "Enviar cotización",
-    description: "Proporciona presupuesto detallado",
+    title: "Cotización enviada",
+    description: "Has enviado la cotización al cliente",
     icon: FileText,
     completed: false,
+    eventType: ServiceTicketStatusHistoryEventType.QUOTE_SENT,
   },
   {
     id: 6,
+    date: "Pendiente",
+    title: "Trabajo en progreso",
+    description: "El trabajo se está realizando en la ubicación del cliente",
+    icon: Hammer,
+    completed: false,
+    eventType: ServiceTicketStatusHistoryEventType.WORK_IN_PROGRESS,
+  },
+  {
+    id: 7,
     date: "Pendiente",
     title: "Cierre del servicio",
     description: "Trabajo completado y pago recibido",
     icon: DollarSign,
     completed: false,
+    eventType: ServiceTicketStatusHistoryEventType.WORK_COMPLETED,
   },
 ];
 
-export default function FollowUpTimelineCard() {
-  const [timeline] = useState<FollowUpTimelineStep[]>(INITIAL_TIMELINE);
+function formatTimelineDate(value: string | Date): string {
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "Pendiente";
+  return d.toLocaleString("es-MX", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+/** Newest-first rows → latest record per `eventType`. */
+function latestHistoryByEventType(
+  records: ServiceTicketStatusHistoryDTO[],
+): Map<ServiceTicketStatusHistoryEventType, ServiceTicketStatusHistoryDTO> {
+  const map = new Map<
+    ServiceTicketStatusHistoryEventType,
+    ServiceTicketStatusHistoryDTO
+  >();
+  for (const r of records) {
+    if (r.eventType == null) continue;
+    if (!map.has(r.eventType)) {
+      map.set(r.eventType, r);
+    }
+  }
+  return map;
+}
+
+function mergeTimelineWithStatusHistory(
+  template: FollowUpTimelineStep[],
+  records: ServiceTicketStatusHistoryDTO[],
+): FollowUpTimelineStep[] {
+  if (template.length === 0) return template;
+  const [first, ...rest] = template;
+  const byEvent = latestHistoryByEventType(records);
+
+  const mergedRest = rest.map((step) => {
+    if (step.eventType == null) {
+      return step;
+    }
+    const rec = byEvent.get(step.eventType);
+    if (!rec) {
+      return {
+        ...step,
+        completed: false,
+        date: "Pendiente",
+      };
+    }
+    return {
+      ...step,
+      completed: true,
+      date: formatTimelineDate(rec.createdAt),
+    };
+  });
+
+  return [first, ...mergedRest];
+}
+
+type FollowUpTimelineCardProps = {
+  initialStatusHistory: ServiceTicketStatusHistoryDTO[];
+};
+
+export default function FollowUpTimelineCard({
+  initialStatusHistory,
+}: FollowUpTimelineCardProps) {
+  const timeline = useMemo(
+    () => mergeTimelineWithStatusHistory(INITIAL_TIMELINE, initialStatusHistory),
+    [initialStatusHistory],
+  );
 
   const progressPercent = useMemo(() => {
     if (timeline.length === 0) return 0;

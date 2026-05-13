@@ -18,6 +18,8 @@ import { _getTicketById } from "@/src/lib/actions/service-tickets.actions";
 import { getTenderNumber } from "@/src/lib/utils/tender.utils";
 import { _getTenderQuestionAnswersForOrgAction } from "@/src/lib/actions/question-set-answer.actions";
 import { _listServiceTicketIncidences } from "@/src/lib/actions/service-tickets-incidences.actions";
+import { _listServiceTicketStatusHistory } from "@/src/lib/actions/service-ticket-status-history.actions";
+import { ServiceTicketStatusHistoryEventType } from "@/src/lib/enums/service-tickets.enum";
 
 function formatFollowUpDate(value: string | Date | null | undefined): string {
   if (value == null || value === "") return "—";
@@ -56,6 +58,14 @@ export default async function LeadFollowUpPage({
     incidencesResult.success && incidencesResult.data
       ? incidencesResult.data
       : [];
+  const statusHistoryResult = await _listServiceTicketStatusHistory(ticketId);
+  const initialStatusHistory =
+    statusHistoryResult.success && statusHistoryResult.data
+      ? statusHistoryResult.data
+      : [];
+  const initialVisitCompleted = initialStatusHistory.some(
+    (h) => h.eventType === ServiceTicketStatusHistoryEventType.VISIT_COMPLETED,
+  );
   const tender = ticket.tender;
   if (!tender) {
     return <div>No se encontró la información del tender.</div>;
@@ -103,7 +113,9 @@ export default async function LeadFollowUpPage({
                   scheduledDate={formatFollowUpDate(ticket.serviceScheduledFor)}
                   answers={answersResult.data ?? []}
                 />
-                <FollowUpTimelineCard />
+                <FollowUpTimelineCard
+                  initialStatusHistory={initialStatusHistory}
+                />
                 <FollowUpIncidentsCard
                   ticketId={ticketId}
                   initialIncidences={initialIncidences}
@@ -113,13 +125,14 @@ export default async function LeadFollowUpPage({
               <div className="space-y-6">
                 <FollowUpStatusManagementCard ticketId={ticketId} />
                 <FollowUpScheduleAppointmentCard
-                  key={
+                  key={`${
                     ticket.serviceScheduledFor
                       ? new Date(ticket.serviceScheduledFor).toISOString()
                       : "none"
-                  }
+                  }-${initialVisitCompleted ? "v1" : "v0"}`}
                   ticketId={ticketId}
                   initialScheduledAt={ticket.serviceScheduledFor}
+                  initialVisitCompleted={initialVisitCompleted}
                 />
                 <FollowUpCommunicationCenterCard />
                 <FollowUpRecommendationsCard />

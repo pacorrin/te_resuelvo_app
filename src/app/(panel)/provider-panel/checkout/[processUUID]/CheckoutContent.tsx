@@ -25,6 +25,7 @@ export default function CheckoutContent({
 
     return {
       id: tender.id,
+      ticketId: null,
       service: tender.description ?? "Servicio",
       serviceType: tender.service?.name ?? "Servicio",
       client: buyer.name ?? buyer.email ?? "Cliente",

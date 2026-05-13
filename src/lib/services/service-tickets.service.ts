@@ -1,5 +1,8 @@
 import { ServiceTicket } from "@/src/lib/entities/ServiceTickets.entity";
-import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
+import {
+  ServiceTicketStatus,
+  ServiceTicketStatusHistoryEventType,
+} from "@/src/lib/enums/service-tickets.enum";
 import type { FileDTO } from "@/src/lib/dtos/File.dto";
 import {
   CreateServiceTicketInput,
@@ -13,9 +16,13 @@ import { FileCategory, FileOwnerType } from "@/src/lib/storage/storage.enums";
 import { TenderClientListDTO } from "../dtos/Tenders.dto";
 import { FileService } from "./file.service";
 import { TenderService } from "./tender.service";
+import { ServiceTicketStatusHistoryService } from "./service-ticket-status-history.service";
 
-
-export type ServiceTicketRelations = ("tender" | "organization" | "tender.service" | "tender.customer");
+export type ServiceTicketRelations =
+  | "tender"
+  | "organization"
+  | "tender.service"
+  | "tender.customer";
 const SERVICE_TICKET_RELATIONS: ServiceTicketRelations[] = [
   "tender",
   "organization",
@@ -34,7 +41,6 @@ export interface ServiceTicketDTO {
 }
 
 export class ServiceTicketService {
-
   static serialize(serviceTicket: ServiceTicket): ServiceTicketDTO {
     return {
       id: serviceTicket.id,
@@ -49,7 +55,10 @@ export class ServiceTicketService {
     };
   }
 
-  static async getById(id: number, relations: ServiceTicketRelations[] = SERVICE_TICKET_RELATIONS): Promise<ServiceTicket | null> {
+  static async getById(
+    id: number,
+    relations: ServiceTicketRelations[] = SERVICE_TICKET_RELATIONS,
+  ): Promise<ServiceTicket | null> {
     if (!Number.isFinite(id) || id <= 0) {
       return null;
     }
@@ -80,7 +89,10 @@ export class ServiceTicketService {
   static async getAllBy(
     searchParams: SearchServiceTicket = {},
   ): Promise<ServiceTicketDTO[]> {
-    const serviceTickets = await ServiceTicketRepository.findAll(searchParams, SERVICE_TICKET_RELATIONS);
+    const serviceTickets = await ServiceTicketRepository.findAll(
+      searchParams,
+      SERVICE_TICKET_RELATIONS,
+    );
     return serviceTickets.map((serviceTicket) => this.serialize(serviceTicket));
   }
 
@@ -119,32 +131,118 @@ export class ServiceTicketService {
     return ServiceTicketRepository.update(id, data);
   }
 
+  static async createStatusEventHistoryForStatus(
+    id: number,
+    status: ServiceTicketStatus,
+    changedBy: number,
+  ): Promise<void> {
+    let statusToCreate: ServiceTicketStatusHistoryEventType[] = [];
+
+    if (status === ServiceTicketStatus.CONTACTED) {
+      statusToCreate = [ServiceTicketStatusHistoryEventType.FIRST_CONTACT];
+    } else if (status === ServiceTicketStatus.QUOTED) {
+      statusToCreate = [
+        ServiceTicketStatusHistoryEventType.FIRST_CONTACT,
+        ServiceTicketStatusHistoryEventType.QUOTE_SENT,
+      ];
+    } else if (status === ServiceTicketStatus.IN_PROGRESS) {
+      statusToCreate = [
+        ServiceTicketStatusHistoryEventType.FIRST_CONTACT,
+        ServiceTicketStatusHistoryEventType.WORK_IN_PROGRESS,
+      ];
+    } else if (status === ServiceTicketStatus.COMPLETED) {
+      statusToCreate = [
+        ServiceTicketStatusHistoryEventType.FIRST_CONTACT,
+        ServiceTicketStatusHistoryEventType.WORK_IN_PROGRESS,
+        ServiceTicketStatusHistoryEventType.WORK_COMPLETED,
+      ];
+    }
+
+    await ServiceTicketStatusHistoryService.createStatusHistoryEvents(
+      id,
+      statusToCreate,
+      status,
+      changedBy,
+    );
+  }
+
   static async markStatus(
     id: number,
     status: ServiceTicketStatus,
+    changedBy: number,
   ): Promise<ServiceTicket> {
+    await this.createStatusEventHistoryForStatus(id, status, changedBy);
     return ServiceTicketRepository.update(id, { status });
   }
 
   static async setServiceScheduledFor(
     id: number,
     serviceScheduledFor: Date | null,
+    changedBy: number,
   ): Promise<ServiceTicket> {
-
     const ticket = await this.getById(id, []);
     if (!ticket) {
       throw new Error("Ticket not found");
     }
 
-    // if (ticket.status == ServiceTicketStatus.PENDING) {
-    //   return this.update(id, { status: ServiceTicketStatus.CONTACTED, serviceScheduledFor });
-    // }
+    if (serviceScheduledFor) {
+      await ServiceTicketStatusHistoryService.createStatusHistoryEvents(
+        id,
+        [
+          ServiceTicketStatusHistoryEventType.VISIT_SCHEDULED,
+          ServiceTicketStatusHistoryEventType.FIRST_CONTACT,
+        ],
+        ticket.status,
+        changedBy,
+      );
 
-    return this.update(id, { serviceScheduledFor });
+      if (ticket.status === ServiceTicketStatus.PENDING) {
+        return await this.update(id, {
+          serviceScheduledFor,
+          status: ServiceTicketStatus.CONTACTED,
+        });
+      }
+    } else {
+      await ServiceTicketStatusHistoryService.deleteStatusHistoryEvents([
+        {
+          ticketId: id,
+          eventType: ServiceTicketStatusHistoryEventType.FIRST_CONTACT,
+        },
+      ]);
+    }
+
+    return this.update(id, {
+      serviceScheduledFor,
+    });
+  }
+
+  static async markTicketVisitCompleted(
+    ticketId: number,
+    changedBy: number,
+  ): Promise<ServiceTicket> {
+    const ticket = await this.getById(ticketId, []);
+    if (!ticket) {
+      throw new Error("Ticket not found");
+    }
+    if (!ticket.serviceScheduledFor) {
+      throw new Error(
+        "Debe haber una cita programada para marcar la visita como realizada.",
+      );
+    }
+    await ServiceTicketStatusHistoryService.create({
+      ticketId,
+      status: ticket.status,
+      eventType: ServiceTicketStatusHistoryEventType.VISIT_COMPLETED,
+      changedBy,
+    });
+    return ticket;
   }
 
   static async uploadQuote(ticketId: number, file: File): Promise<FileDTO> {
-    const ticket = await ServiceTicketRepository.findOneBy({ id: ticketId }, []);
+    const ticket = await ServiceTicketRepository.findOneBy(
+      { id: ticketId },
+      [],
+    );
     if (!ticket) {
       throw new Error("Ticket not found");
     }

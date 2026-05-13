@@ -14,18 +14,24 @@ import { getErrorMessage } from "../utils/error";
 import {
   ServiceTicketPaymentBalanceType,
   ServiceTicketStatus,
+  ServiceTicketStatusHistoryEventType,
 } from "../enums/service-tickets.enum";
 import {
   ServiceTicketPaymentService,
   type ServiceTicketPaymentDTO,
 } from "../services/service-ticket-payment.service";
+import { ServiceTicketStatusHistoryService } from "../services/service-ticket-status-history.service";
 
 export const _scheduleServiceAppointment = protectedAction(
   async (
-    _,
+    session,
     ticketId: number,
     serviceScheduledFor: string | null,
   ): Promise<ActionResponse<ServiceTicketDTO>> => {
+    const userId = Number(session.user?.id);
+    if (!Number.isFinite(userId)) {
+      return { success: false, error: "Sesión inválida" };
+    }
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
@@ -46,6 +52,7 @@ export const _scheduleServiceAppointment = protectedAction(
       const ticket = await ServiceTicketService.setServiceScheduledFor(
         ticketId,
         at,
+        userId
       );
       return { success: true, data: ServiceTicketService.serialize(ticket) };
     } catch {
@@ -53,6 +60,49 @@ export const _scheduleServiceAppointment = protectedAction(
         success: false,
         error: "No se pudo guardar la cita del servicio.",
       };
+    }
+  },
+);
+
+export const _recordServiceTicketVisitCompleted = protectedAction(
+  async (
+    session,
+    ticketId: number,
+  ): Promise<ActionResponse<{ recorded: true }>> => {
+    const userId = Number(session.user?.id);
+    if (!Number.isFinite(userId)) {
+      return { success: false, error: "Sesión inválida" };
+    }
+    if (!Number.isFinite(ticketId) || ticketId <= 0) {
+      return { success: false, error: "Identificador de ticket inválido." };
+    }
+    try {
+      const ticket = await ServiceTicketService.getById(ticketId, []);
+      if (!ticket) {
+        return { success: false, error: "Ticket no encontrado." };
+      }
+      const membership = await OrganizationMemberRepository.findOneBy({
+        userId,
+        organizationId: ticket.organizationId,
+      });
+      if (!membership) {
+        return { success: false, error: "No tienes acceso a este ticket." };
+      }
+      const existing = await ServiceTicketStatusHistoryService.listByTicket(
+        ticketId,
+      );
+      if (
+        existing.some(
+          (r) => r.eventType === ServiceTicketStatusHistoryEventType.VISIT_COMPLETED,
+        )
+      ) {
+        return { success: true, data: { recorded: true } };
+      }
+      await ServiceTicketService.markTicketVisitCompleted(ticketId, userId);
+      return { success: true, data: { recorded: true } };
+    } catch (error) {
+      console.error("Error recording visit completed:", error);
+      return { success: false, error: getErrorMessage(error) };
     }
   },
 );
@@ -109,7 +159,11 @@ export const _updateTicketStatus = protectedAction(
     if (!Number.isFinite(status) || status <= 0) {
       return { success: false, error: "Estado de ticket inválido." };
     }
-    const ticket = await ServiceTicketService.markStatus(ticketId, status);
+    const ticket = await ServiceTicketService.markStatus(
+      ticketId,
+      status,
+      userId,
+    );
     return { success: true, data: ServiceTicketService.serialize(ticket) };
   },
 );
@@ -196,6 +250,11 @@ export const _uploadServiceTicketQuote = protectedAction(
         await ServiceTicketService.update(ticketId, {
           status: ServiceTicketStatus.QUOTED,
         });
+        await ServiceTicketService.createStatusEventHistoryForStatus(
+          ticketId,
+          ServiceTicketStatus.QUOTED,
+          Number(userId),
+        );
       }
 
       const data = await ServiceTicketService.uploadQuote(ticketId, file);

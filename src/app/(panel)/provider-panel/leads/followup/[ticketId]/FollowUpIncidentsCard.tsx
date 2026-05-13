@@ -47,10 +47,14 @@ import {
   _listServiceTicketIncidenceEvidenceForTicket,
 } from "@/src/lib/actions/service-tickets-incidences.actions";
 import type { FileDTO } from "@/src/lib/dtos/File.dto";
-import { ServiceTicketIncidenceType } from "@/src/lib/enums/service-tickets.enum";
+import {
+  ServiceTicketIncidenceType,
+  ServiceTicketStatus,
+} from "@/src/lib/enums/service-tickets.enum";
 import type { ServiceTicketIncidenceDTO } from "@/src/lib/services/service-ticket-incidence.service";
 import { cn, toastError, toastSuccess, toastWarning } from "@/src/lib/utils";
 import { Separator } from "@/src/components/ui/separator";
+import { useFollowUpTicketStatus } from "./FollowUpTicketStatus";
 
 const DESC_MAX = 255;
 
@@ -312,6 +316,11 @@ export default function FollowUpIncidentsCard({
   initialIncidences,
 }: FollowUpIncidentsCardProps) {
   const router = useRouter();
+  const { status: ticketStatusFromCtx } = useFollowUpTicketStatus();
+  const ticketStatus = Number(ticketStatusFromCtx) as ServiceTicketStatus;
+  const incidentFormLocked =
+    ticketStatus === ServiceTicketStatus.COMPLETED ||
+    ticketStatus === ServiceTicketStatus.CANCELLED;
   const [incidentType, setIncidentType] = useState<ServiceTicketIncidenceType>(
     ServiceTicketIncidenceType.NOTA,
   );
@@ -391,6 +400,10 @@ export default function FollowUpIncidentsCard({
   const onCreateFormEvidenceFilesChange = (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
+    if (incidentFormLocked) {
+      e.target.value = "";
+      return;
+    }
     // `FileList` is live: clearing the input empties it, so snapshot before reset.
     const picked =
       e.target.files && e.target.files.length > 0
@@ -406,6 +419,7 @@ export default function FollowUpIncidentsCard({
   };
 
   const handleAddIncident = async () => {
+    if (incidentFormLocked) return;
     const trimmed = incidentDescription.trim();
     if (!trimmed) return;
 
@@ -500,9 +514,13 @@ export default function FollowUpIncidentsCard({
                   onValueChange={(v) =>
                     setIncidentType(Number(v) as ServiceTicketIncidenceType)
                   }
-                  disabled={saving}
+                  disabled={saving || incidentFormLocked}
                 >
-                  <SelectTrigger id="incident-type" className="mt-1 w-full">
+                  <SelectTrigger
+                    id="incident-type"
+                    className="mt-1 w-full"
+                    disabled={saving || incidentFormLocked}
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -538,7 +556,7 @@ export default function FollowUpIncidentsCard({
                     value={incidentDescription}
                     onChange={(e) => setIncidentDescription(e.target.value)}
                     maxLength={DESC_MAX}
-                    disabled={saving}
+                    disabled={saving || incidentFormLocked}
                     className="mt-1"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -557,6 +575,7 @@ export default function FollowUpIncidentsCard({
                 className="sr-only"
                 aria-hidden
                 tabIndex={-1}
+                disabled={incidentFormLocked}
                 onChange={onCreateFormEvidenceFilesChange}
               />
               <div className="flex items-center justify-between gap-2">
@@ -567,7 +586,7 @@ export default function FollowUpIncidentsCard({
                   size="sm"
                   className="h-8 shrink-0"
                   onClick={openCreateFormEvidencePicker}
-                  disabled={saving}
+                  disabled={saving || incidentFormLocked}
                 >
                   <Paperclip className="mr-1.5 h-3.5 w-3.5" />
                   Adjuntar archivos
@@ -623,7 +642,7 @@ export default function FollowUpIncidentsCard({
                           className="shrink-0"
                           aria-label={`Quitar ${f.name}`}
                           onClick={() => removePendingEvidenceFile(index)}
-                          disabled={saving}
+                          disabled={saving || incidentFormLocked}
                         >
                           <X className="h-3.5 w-3.5" />
                         </Button>
@@ -642,7 +661,9 @@ export default function FollowUpIncidentsCard({
           <Button
             size="sm"
             onClick={() => void handleAddIncident()}
-            disabled={saving || !incidentDescription.trim()}
+            disabled={
+              saving || !incidentDescription.trim() || incidentFormLocked
+            }
             className="w-full"
           >
             <Plus className="mr-2 h-4 w-4" />
