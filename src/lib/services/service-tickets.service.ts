@@ -18,6 +18,8 @@ import { FileService } from "./file.service";
 import { OrganizationMemberService } from "./organization-member.service";
 import { TenderService } from "./tender.service";
 import { ServiceTicketStatusHistoryService } from "./service-ticket-status-history.service";
+import { ServiceTicketAppointmentRepository } from "@/src/lib/repositories/ServiceTicketAppointment.repo";
+import { ServiceTicketAppointmentStatus } from "@/src/lib/enums/service-ticket-appointment.enum";
 
 export type ServiceTicketRelations =
   | "tender"
@@ -249,17 +251,32 @@ export class ServiceTicketService {
     if (!ticket) {
       throw new Error("Ticket not found");
     }
-    if (!ticket.serviceScheduledFor) {
+    const appointmentCount =
+      await ServiceTicketAppointmentRepository.countByTicketId(ticketId);
+    if (appointmentCount === 0 && !ticket.serviceScheduledFor) {
       throw new Error(
         "Debe haber una cita programada para marcar la visita como realizada.",
       );
     }
-    await ServiceTicketStatusHistoryService.create({
+    const appointments =
+      await ServiceTicketAppointmentRepository.findAllByTicketId(ticketId, []);
+    const target =
+      appointments.find(
+        (r) => r.status === ServiceTicketAppointmentStatus.SCHEDULED,
+      ) ?? appointments[0];
+    if (!target) {
+      throw new Error(
+        "Debe haber una cita programada para marcar la visita como realizada.",
+      );
+    }
+    const { ServiceTicketAppointmentService } = await import(
+      "./service-ticket-appointment.service"
+    );
+    await ServiceTicketAppointmentService.markAsCompleted(
       ticketId,
-      status: ticket.status,
-      eventType: ServiceTicketStatusHistoryEventType.VISIT_COMPLETED,
+      target.id,
       changedBy,
-    });
+    );
     return ticket;
   }
 

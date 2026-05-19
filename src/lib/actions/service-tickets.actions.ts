@@ -21,6 +21,7 @@ import {
   type ServiceTicketPaymentDTO,
 } from "../services/service-ticket-payment.service";
 import { ServiceTicketStatusHistoryService } from "../services/service-ticket-status-history.service";
+import { ServiceTicketAppointmentService } from "../services/service-ticket-appointment.service";
 
 export const _scheduleServiceAppointment = protectedAction(
   async (
@@ -33,29 +34,66 @@ export const _scheduleServiceAppointment = protectedAction(
       return { success: false, error: "Identificador de ticket inválido." };
     }
 
-    let at: Date | null = null;
-    if (
-      serviceScheduledFor != null &&
-      String(serviceScheduledFor).trim() !== ""
-    ) {
+    try {
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
+
+      if (
+        serviceScheduledFor == null ||
+        String(serviceScheduledFor).trim() === ""
+      ) {
+        await ServiceTicketAppointmentService.deleteAllForTicket(ticketId);
+        const ticket = await ServiceTicketService.getById(ticketId);
+        if (!ticket) {
+          return { success: false, error: "Ticket no encontrado." };
+        }
+        return {
+          success: true,
+          data: ServiceTicketService.serialize(ticket),
+        };
+      }
+
       const parsed = new Date(serviceScheduledFor);
       if (Number.isNaN(parsed.getTime())) {
         return { success: false, error: "Fecha u hora inválida." };
       }
-      at = parsed;
-    }
 
-    try {
-      const ticket = await ServiceTicketService.setServiceScheduledFor(
-        ticketId,
-        at,
-        userId
-      );
+      const existing =
+        await ServiceTicketAppointmentService.listByTicket(ticketId);
+      if (existing.length === 0) {
+        await ServiceTicketAppointmentService.create(
+          ticketId,
+          {
+            description: "Primera visita",
+            scheduledAt: parsed.toISOString(),
+            attendingUserId: userId,
+          },
+          userId,
+        );
+      } else {
+        const first = existing[0];
+        await ServiceTicketAppointmentService.updateScheduledAt(
+          ticketId,
+          first.id,
+          parsed,
+        );
+      }
+
+      const ticket = await ServiceTicketService.getById(ticketId);
+      if (!ticket) {
+        return { success: false, error: "Ticket no encontrado." };
+      }
       return { success: true, data: ServiceTicketService.serialize(ticket) };
-    } catch {
+    } catch (error) {
+      console.error("Error scheduling service appointment:", error);
       return {
         success: false,
-        error: "No se pudo guardar la cita del servicio.",
+        error: getErrorMessage(error),
       };
     }
   },

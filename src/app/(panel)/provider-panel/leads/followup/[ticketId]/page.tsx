@@ -19,6 +19,8 @@ import { getTenderNumber } from "@/src/lib/utils/tender.utils";
 import { _getTenderQuestionAnswersForOrgAction } from "@/src/lib/actions/question-set-answer.actions";
 import { _listServiceTicketIncidences } from "@/src/lib/actions/service-tickets-incidences.actions";
 import { _listServiceTicketStatusHistory } from "@/src/lib/actions/service-ticket-status-history.actions";
+import { _listServiceTicketAppointments } from "@/src/lib/actions/service-ticket-appointments.actions";
+import { _getOrganizationMembers } from "@/src/lib/actions/organization_members.actions";
 import { ServiceTicketStatusHistoryEventType } from "@/src/lib/enums/service-tickets.enum";
 
 function formatFollowUpDate(value: string | Date | null | undefined): string {
@@ -66,6 +68,16 @@ export default async function LeadFollowUpPage({
   const initialVisitCompleted = initialStatusHistory.some(
     (h) => h.eventType === ServiceTicketStatusHistoryEventType.VISIT_COMPLETED,
   );
+  const appointmentsResult = await _listServiceTicketAppointments(ticketId);
+  const initialAppointments =
+    appointmentsResult.success && appointmentsResult.data
+      ? appointmentsResult.data
+      : [];
+  const membersResult = await _getOrganizationMembers(ticket.organizationId);
+  const organizationMembers =
+    membersResult.success && membersResult.members
+      ? membersResult.members
+      : [];
   const tender = ticket.tender;
   if (!tender) {
     return <div>No se encontró la información del tender.</div>;
@@ -125,12 +137,11 @@ export default async function LeadFollowUpPage({
               <div className="space-y-6">
                 <FollowUpStatusManagementCard ticketId={ticketId} />
                 <FollowUpScheduleAppointmentCard
-                  key={`${
-                    ticket.serviceScheduledFor
-                      ? new Date(ticket.serviceScheduledFor).toISOString()
-                      : "none"
-                  }-${initialVisitCompleted ? "v1" : "v0"}`}
+                  key={`${initialAppointments.map((a) => a.id).join("-")}-${initialVisitCompleted ? "v1" : "v0"}`}
                   ticketId={ticketId}
+                  organizationId={ticket.organizationId}
+                  initialAppointments={initialAppointments}
+                  organizationMembers={organizationMembers}
                   initialScheduledAt={ticket.serviceScheduledFor}
                   initialVisitCompleted={initialVisitCompleted}
                 />

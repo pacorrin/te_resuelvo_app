@@ -16,6 +16,28 @@ import { ServiceTicket } from "../entities/ServiceTickets.entity";
 import { ServiceTicketIncidence } from "../entities/ServiceTicketIncidence.entity";
 import { ServiceTicketPayment } from "../entities/ServiceTicketPayment.entity";
 import { ServiceTicketStatusHistory } from "../entities/ServiceTicketStatusHistory.entity";
+import { ServiceTicketAppointment } from "../entities/ServiceTicketAppointment.entity";
+
+/** Single source of truth for TypeORM entity registration (app runtime + stale-cache checks). */
+export const APP_ENTITIES = [
+  User,
+  Tender,
+  Organization,
+  OrganizationMember,
+  Service,
+  OrganizationService,
+  OrganizationCoverageArea,
+  FileEntity,
+  TenderBuyer,
+  QuestionSet,
+  Question,
+  QuestionSetAnswer,
+  ServiceTicket,
+  ServiceTicketIncidence,
+  ServiceTicketPayment,
+  ServiceTicketStatusHistory,
+  ServiceTicketAppointment,
+] as const;
 
 let AppDataSourceInstance: DataSource;
 
@@ -30,24 +52,7 @@ try {
     /** Interpret and send datetimes as UTC (offset +00:00), not the MySQL server’s local TZ. */
     timezone: "Z",
     logging: process.env.NODE_ENV === "development",
-    entities: [
-      User,
-      Tender,
-      Organization,
-      OrganizationMember,
-      Service,
-      OrganizationService,
-      OrganizationCoverageArea,
-      FileEntity,
-      TenderBuyer,
-      QuestionSet,
-      Question,
-      QuestionSetAnswer,
-      ServiceTicket,
-      ServiceTicketIncidence,
-      ServiceTicketPayment,
-      ServiceTicketStatusHistory,
-    ],
+    entities: [...APP_ENTITIES],
     subscribers: [],
   });
 } catch (error) {
