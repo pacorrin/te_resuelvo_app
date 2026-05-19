@@ -37,6 +37,7 @@ import {
 import { ServiceTicketPaymentsModal } from "./ServiceTicketPaymentsModal";
 import type { FileDTO } from "@/src/lib/dtos/File.dto";
 import { toastError, toastSuccess } from "@/src/lib/utils";
+import { getErrorMessage } from "@/src/lib/utils/error";
 
 function normalizeQuoteFileDto(f: FileDTO): FileDTO {
   return {
@@ -159,9 +160,7 @@ export default function FollowUpStatusManagementCard({
       );
       return false;
     } catch (e) {
-      toastError(
-        e instanceof Error ? e.message : "No se pudo actualizar el estado del ticket.",
-      );
+      toastError(getErrorMessage(e));
       return false;
     }
   };

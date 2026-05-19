@@ -5,6 +5,7 @@ import { ServiceTicketIncidenceType } from "@/src/lib/enums/service-tickets.enum
 import { ServiceTicketIncidenceRepository } from "@/src/lib/repositories/ServiceTicketIncidence.repo";
 import { saveRequestBodyToLocalFile } from "@/src/lib/storage/local-storage.service";
 import { FileCategory, FileOwnerType } from "@/src/lib/storage/storage.enums";
+import { getErrorMessage } from "@/src/lib/utils/error";
 import { FileService } from "./file.service";
 
 export interface ServiceTicketIncidenceDTO {
@@ -49,6 +50,29 @@ export class ServiceTicketIncidenceService {
     return rows.map((r) => this.serialize(r));
   }
 
+  /** Incidence belonging to `ticketId`, else `null` (wrong ticket or missing). */
+  static async findIncidenceDtoForTicket(
+    incidenceId: number,
+    ticketId: number,
+  ): Promise<ServiceTicketIncidenceDTO | null> {
+    if (
+      !Number.isFinite(incidenceId) ||
+      !Number.isFinite(ticketId) ||
+      incidenceId <= 0 ||
+      ticketId <= 0
+    ) {
+      return null;
+    }
+    const inc = await ServiceTicketIncidenceRepository.findOneBy(
+      { id: incidenceId },
+      [],
+    );
+    if (!inc || inc.ticketId !== ticketId) {
+      return null;
+    }
+    return this.serialize(inc);
+  }
+
   static async create(
     ticketId: number,
     input: Omit<CreateServiceTicketIncidenceInput, "ticketId">,
@@ -72,8 +96,7 @@ export class ServiceTicketIncidenceService {
         evidenceUploaded.push(dto);
       } catch (e) {
         const label = file.name?.trim() || "archivo";
-        const msg = e instanceof Error ? e.message : String(e);
-        evidenceUploadErrors.push(`${label}: ${msg}`);
+        evidenceUploadErrors.push(`${label}: ${getErrorMessage(e)}`);
       }
     }
 

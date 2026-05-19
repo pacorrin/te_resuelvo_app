@@ -5,6 +5,7 @@ import { TenderBuyerService } from "@/src/lib/services/tender-buyer.service";
 import { TenderPaymentStatus } from "@/src/lib/enums/tender.enum";
 import { ServiceTicketService } from "@/src/lib/services/service-tickets.service";
 import { ServiceTicketStatus } from "@/src/lib/enums/service-tickets.enum";
+import { getErrorMessage } from "@/src/lib/utils/error";
 
 export const runtime = "nodejs";
 
@@ -24,8 +25,7 @@ export async function POST(request: Request) {
     try {
       event = stripe.webhooks.constructEvent(payload, signature, endpointSecret);
     } catch (err) {
-      const errorMessage =
-        err instanceof Error ? err.message : "Unknown signature verification error";
+      const errorMessage = getErrorMessage(err);
       console.log("Webhook signature verification failed.", errorMessage);
       return new NextResponse("Webhook Error", { status: 400 });
     }

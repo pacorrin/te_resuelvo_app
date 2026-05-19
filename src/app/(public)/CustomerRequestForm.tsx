@@ -53,7 +53,10 @@ function stringifyMultiAnswer(selected: string[]): string {
 }
 
 export const CUSTOMER_REQUEST_FORM_STEPS = [
-  { label: "Tus datos", description: "Contacto, servicio, ubicación y descripción" },
+  {
+    label: "Tus datos",
+    description: "Contacto, servicio, ubicación y descripción",
+  },
   { label: "Detalles", description: "Preguntas adicionales" },
 ] as const;
 
@@ -86,8 +89,11 @@ export function CustomerRequestForm({
   const [selectedService, setSelectedService] = useState("");
   const [publicServices, setPublicServices] = useState<ServiceDTO[]>([]);
   const [publicServicesLoading, setPublicServicesLoading] = useState(true);
-  const [serviceQuestionSet, setServiceQuestionSet] = useState<QuestionSetClientDTO | null>(null);
-  const [detailAnswers, setDetailAnswers] = useState<Record<string, string>>({});
+  const [serviceQuestionSet, setServiceQuestionSet] =
+    useState<QuestionSetClientDTO | null>(null);
+  const [detailAnswers, setDetailAnswers] = useState<Record<string, string>>(
+    {},
+  );
   const activeQuestions = serviceQuestionSet?.questions ?? [];
 
   const setDetailAnswer = (id: string, value: string) => {
@@ -122,18 +128,20 @@ export function CustomerRequestForm({
       .sort(([a], [b]) => a.localeCompare(b, "es"))
       .map(([label, list]) => ({
         label,
-        services: [...list].sort((x, y) =>
-          x.name.localeCompare(y.name, "es"),
-        ),
+        services: [...list].sort((x, y) => x.name.localeCompare(y.name, "es")),
       }));
   }, [publicServices]);
 
   const validateStep0 = (): boolean => {
-    const form = document.getElementById("customer-request-form") as HTMLFormElement | null;
+    const form = document.getElementById(
+      "customer-request-form",
+    ) as HTMLFormElement | null;
     const name = form?.querySelector<HTMLInputElement>('[name="name"]');
     const phone = form?.querySelector<HTMLInputElement>('[name="phone"]');
     const email = form?.querySelector<HTMLInputElement>('[name="email"]');
-    const description = form?.querySelector<HTMLTextAreaElement>('[name="description"]');
+    const description = form?.querySelector<HTMLTextAreaElement>(
+      '[name="description"]',
+    );
 
     if (!name?.value.trim()) {
       toastInfo("Indica tu nombre completo.", { position: "bottom-center" });
@@ -141,7 +149,9 @@ export function CustomerRequestForm({
       return false;
     }
     if (!phone?.value.trim()) {
-      toastInfo("Indica un teléfono de contacto.", { position: "bottom-center" });
+      toastInfo("Indica un teléfono de contacto.", {
+        position: "bottom-center",
+      });
       phone?.focus();
       return false;
     }
@@ -151,7 +161,9 @@ export function CustomerRequestForm({
       return false;
     }
     if (!selectedService) {
-      toastInfo("Selecciona un tipo de servicio.", { position: "bottom-center" });
+      toastInfo("Selecciona un tipo de servicio.", {
+        position: "bottom-center",
+      });
       return false;
     }
     if (!addressLine.trim()) {
@@ -163,7 +175,9 @@ export function CustomerRequestForm({
       return false;
     }
     if (!description?.value.trim()) {
-      toastInfo("Describe el problema o el servicio que necesitas.", { position: "bottom-center" });
+      toastInfo("Describe el problema o el servicio que necesitas.", {
+        position: "bottom-center",
+      });
       description?.focus();
       return false;
     }
@@ -173,11 +187,13 @@ export function CustomerRequestForm({
   const goNext = async () => {
     if (!validateStep0()) return;
     setIsFetchingQuestionSet(true);
-    const result = await _getServiceQuestionSet(null, Number(selectedService));
+    const result = await _getServiceQuestionSet(Number(selectedService));
     setIsFetchingQuestionSet(false);
 
     if (!result.success) {
-      toastError(result.error || "No se pudo obtener el cuestionario del servicio.");
+      toastError(
+        result.error || "No se pudo obtener el cuestionario del servicio.",
+      );
       return;
     }
 
@@ -222,7 +238,7 @@ export function CustomerRequestForm({
               const answer =
                 q.questionType === QuestionType.MULTIPLE_CHOICE
                   ? parseMultiAnswer(raw).join(", ")
-                  : raw?.trim() ?? "";
+                  : (raw?.trim() ?? "");
               if (!answer) return null;
               return {
                 questionSetId: serviceQuestionSet.id,
@@ -231,11 +247,10 @@ export function CustomerRequestForm({
               };
             })
             .filter(
-              (row): row is CreateTenderFromPublicSiteQuestionAnswerDTO => row !== null,
+              (row): row is CreateTenderFromPublicSiteQuestionAnswerDTO =>
+                row !== null,
             )
         : undefined;
-
-        
 
     const data: CreateTenderFromPublicSiteDTO = {
       personName: formData.get("name") as string,
@@ -370,7 +385,9 @@ export function CustomerRequestForm({
               >
                 {servicesBySector.map((group) => (
                   <SelectGroup key={group.label}>
-                    <SelectLabel className="text-secondary font-bold">• {group.label}</SelectLabel>
+                    <SelectLabel className="text-secondary font-bold">
+                      • {group.label}
+                    </SelectLabel>
                     {group.services.map((svc) => (
                       <SelectItem key={svc.id} value={String(svc.id)}>
                         {svc.name}
@@ -384,7 +401,10 @@ export function CustomerRequestForm({
 
           <div className="flex gap-4 md:col-span-2">
             <div className="flex-1 space-y-2">
-              <Label htmlFor="hero-address-reference" className="text-xs font-semibold">
+              <Label
+                htmlFor="hero-address-reference"
+                className="text-xs font-semibold"
+              >
                 Dirección
               </Label>
               <Input
@@ -396,7 +416,10 @@ export function CustomerRequestForm({
               />
             </div>
             <div className="flex min-w-[100px] flex-col space-y-2">
-              <Label htmlFor="hero-postal-code" className="text-xs font-semibold">
+              <Label
+                htmlFor="hero-postal-code"
+                className="text-xs font-semibold"
+              >
                 C.P.
               </Label>
               <Input
@@ -457,7 +480,10 @@ export function CustomerRequestForm({
                 const qKey = String(q.id);
                 const opts = q.options ?? [];
 
-                if (q.questionType === QuestionType.MULTIPLE_CHOICE && opts.length > 0) {
+                if (
+                  q.questionType === QuestionType.MULTIPLE_CHOICE &&
+                  opts.length > 0
+                ) {
                   const selected = parseMultiAnswer(detailAnswers[qKey]);
                   return (
                     <fieldset key={q.id} className="space-y-2 border-0 p-0">
@@ -476,12 +502,17 @@ export function CustomerRequestForm({
                               className="mt-0.5"
                               checked={selected.includes(opt)}
                               onCheckedChange={(checked) => {
-                                const cur = parseMultiAnswer(detailAnswers[qKey]);
+                                const cur = parseMultiAnswer(
+                                  detailAnswers[qKey],
+                                );
                                 const next =
                                   checked === true
                                     ? [...cur.filter((x) => x !== opt), opt]
                                     : cur.filter((x) => x !== opt);
-                                setDetailAnswer(qKey, stringifyMultiAnswer(next));
+                                setDetailAnswer(
+                                  qKey,
+                                  stringifyMultiAnswer(next),
+                                );
                               }}
                             />
                             <span>{opt}</span>
@@ -492,10 +523,16 @@ export function CustomerRequestForm({
                   );
                 }
 
-                if (q.questionType === QuestionType.SINGLE_CHOICE && opts.length > 0) {
+                if (
+                  q.questionType === QuestionType.SINGLE_CHOICE &&
+                  opts.length > 0
+                ) {
                   return (
                     <div key={q.id} className="space-y-2">
-                      <Label htmlFor={`hero-q-${q.id}`} className="text-xs font-semibold">
+                      <Label
+                        htmlFor={`hero-q-${q.id}`}
+                        className="text-xs font-semibold"
+                      >
                         {q.questionText}
                       </Label>
                       <Select
@@ -522,7 +559,10 @@ export function CustomerRequestForm({
 
                 return (
                   <div key={q.id} className="space-y-2">
-                    <Label htmlFor={`hero-q-${q.id}`} className="text-xs font-semibold">
+                    <Label
+                      htmlFor={`hero-q-${q.id}`}
+                      className="text-xs font-semibold"
+                    >
                       {q.questionText}
                     </Label>
                     <Input

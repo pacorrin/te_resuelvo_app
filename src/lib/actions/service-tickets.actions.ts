@@ -7,7 +7,7 @@ import {
 } from "@/src/lib/services/service-tickets.service";
 import type { FileDTO } from "../dtos/File.dto";
 import { FileService } from "../services/file.service";
-import { OrganizationMemberRepository } from "../repositories/OrganizationMember.repo";
+import { OrganizationMemberService } from "../services/organization-member.service";
 import { FileOwnerType } from "../storage/storage.enums";
 import type { ActionResponse } from "../utils/action-response";
 import { getErrorMessage } from "../utils/error";
@@ -28,10 +28,7 @@ export const _scheduleServiceAppointment = protectedAction(
     ticketId: number,
     serviceScheduledFor: string | null,
   ): Promise<ActionResponse<ServiceTicketDTO>> => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
@@ -69,24 +66,17 @@ export const _recordServiceTicketVisitCompleted = protectedAction(
     session,
     ticketId: number,
   ): Promise<ActionResponse<{ recorded: true }>> => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
     try {
-      const ticket = await ServiceTicketService.getById(ticketId, []);
-      if (!ticket) {
-        return { success: false, error: "Ticket no encontrado." };
-      }
-      const membership = await OrganizationMemberRepository.findOneBy({
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
         userId,
-        organizationId: ticket.organizationId,
-      });
-      if (!membership) {
-        return { success: false, error: "No tienes acceso a este ticket." };
+        ticketId,
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
       }
       const existing = await ServiceTicketStatusHistoryService.listByTicket(
         ticketId,
@@ -109,15 +99,13 @@ export const _recordServiceTicketVisitCompleted = protectedAction(
 
 export const _getTicketsByOrganization = protectedAction(
   async (session, organizationId: number) => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
-    const membership = await OrganizationMemberRepository.findOneBy({
-      userId,
-      organizationId,
-    });
-    if (!membership) {
+    const userId = Number(session.user.id);
+    const canAccess =
+      await OrganizationMemberService.userBelongsToOrganization(
+        userId,
+        organizationId,
+      );
+    if (!canAccess) {
       return { success: false, error: "No tienes acceso a esta organización." };
     }
     const serviceTickets = await ServiceTicketService.getAllBy({
@@ -132,10 +120,7 @@ export const _getTicketById = protectedAction(
     session,
     ticketId: number,
   ): Promise<ActionResponse<ServiceTicketDTO>> => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
@@ -149,10 +134,7 @@ export const _getTicketById = protectedAction(
 
 export const _updateTicketStatus = protectedAction(
   async (session, ticketId: number, status: ServiceTicketStatus) => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
@@ -173,27 +155,17 @@ export const _getServiceTicketQuoteFile = protectedAction(
     session,
     ticketId: number,
   ): Promise<ActionResponse<FileDTO | null>> => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
     try {
-      const ticket = await ServiceTicketService.getById(ticketId, []);
-      if (!ticket) {
-        return { success: false, error: "Ticket no encontrado." };
-      }
-      const membership = await OrganizationMemberRepository.findOneBy({
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
         userId,
-        organizationId: ticket.organizationId,
-      });
-      if (!membership) {
-        return {
-          success: false,
-          error: "No tienes acceso a este ticket.",
-        };
+        ticketId,
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
       }
       const files = await FileService.getByOwner(
         FileOwnerType.SERVICE_TICKET_QUOTE,
@@ -221,27 +193,24 @@ export const _uploadServiceTicketQuote = protectedAction(
     ticketId: number,
     file: File,
   ): Promise<ActionResponse<FileDTO>> => {
-    const userId = Number(session.user?.id);
+    const userId = Number(session.user.id);
     if (!Number.isFinite(ticketId) || ticketId <= 0) {
       return { success: false, error: "Identificador de ticket inválido." };
     }
 
     try {
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+        "No tienes acceso a subir archivos para este ticket.",
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
       const ticket = await ServiceTicketService.getById(ticketId, []);
       if (!ticket) {
         return { success: false, error: "Ticket no encontrado." };
       }
-      const membership = await OrganizationMemberRepository.findOneBy({
-        userId,
-        organizationId: ticket.organizationId,
-      });
-      if (!membership) {
-        return {
-          success: false,
-          error: "No tienes acceso a subir archivos para este ticket.",
-        };
-      }
-
       if (
         ticket.status != ServiceTicketStatus.COMPLETED &&
         ticket.status != ServiceTicketStatus.CANCELLED &&
@@ -266,38 +235,17 @@ export const _uploadServiceTicketQuote = protectedAction(
   },
 );
 
-async function assertUserCanAccessServiceTicket(
-  userId: number,
-  ticketId: number,
-): Promise<{ ok: true } | { ok: false; error: string }> {
-  if (!Number.isFinite(ticketId) || ticketId <= 0) {
-    return { ok: false, error: "Identificador de ticket inválido." };
-  }
-  const ticket = await ServiceTicketService.getById(ticketId, []);
-  if (!ticket) {
-    return { ok: false, error: "Ticket no encontrado." };
-  }
-  const membership = await OrganizationMemberRepository.findOneBy({
-    userId,
-    organizationId: ticket.organizationId,
-  });
-  if (!membership) {
-    return { ok: false, error: "No tienes acceso a este ticket." };
-  }
-  return { ok: true };
-}
-
 export const _listServiceTicketPayments = protectedAction(
   async (
     session,
     ticketId: number,
   ): Promise<ActionResponse<ServiceTicketPaymentDTO[]>> => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     try {
-      const access = await assertUserCanAccessServiceTicket(userId, ticketId);
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+      );
       if (!access.ok) {
         return { success: false, error: access.error };
       }
@@ -320,10 +268,7 @@ export const _createServiceTicketPayment = protectedAction(
       description?: string | null;
     },
   ): Promise<ActionResponse<ServiceTicketPaymentDTO>> => {
-    const userId = Number(session.user?.id);
-    if (!Number.isFinite(userId)) {
-      return { success: false, error: "Sesión inválida" };
-    }
+    const userId = Number(session.user.id);
     const balanceType = Number(input.balanceType);
     if (
       balanceType !== ServiceTicketPaymentBalanceType.CREDIT &&
@@ -347,7 +292,10 @@ export const _createServiceTicketPayment = protectedAction(
       description = description.slice(0, 150);
     }
     try {
-      const access = await assertUserCanAccessServiceTicket(userId, ticketId);
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+      );
       if (!access.ok) {
         return { success: false, error: access.error };
       }

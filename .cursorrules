@@ -1,0 +1,554 @@
+# Te Resuelvo / teresuelvo_app — Cursor rules
+
+Reference:
+- `docs/ai/coding-rules.md`
+- `docs/ai/architecture.md`
+- `AI_INDEX.md`
+
+Extend the repo as-is.
+Do not propose rewrites, new architectures, or framework migrations unless explicitly requested.
+
+---
+
+# AI behavior
+
+Before implementing changes:
+
+1. Analyze neighboring files first
+2. Infer conventions from the current module
+3. Reuse existing patterns
+4. Extend existing abstractions before creating new ones
+5. Match the style of surrounding code
+6. Read architecture and coding rules documentation when relevant
+7. Prioritize consistency over theoretical perfection
+
+Do not generate code immediately.
+
+First:
+- understand the current implementation
+- identify existing abstractions
+- identify reusable utilities
+- identify existing validation patterns
+- identify existing service boundaries
+- identify surrounding module conventions
+
+Only then propose changes.
+
+When implementing a feature:
+- find the closest existing implementation
+- mirror its structure
+- preserve consistency with sibling modules
+- avoid creating alternative patterns
+
+Always prefer incremental evolution over architectural reinvention.
+
+---
+
+# Scope
+
+Next.js App Router (`src/app`), React 19, TypeScript strict, TypeORM + MySQL, NextAuth v5 (beta).
+
+Package manager: `pnpm`.
+
+---
+
+# Architecture (strict)
+
+Flow for domain work:
+
+UI (RSC/client)
+→ Server Action (`src/lib/actions/*.actions.ts`)
+→ Service (`*.service.ts` static class)
+→ Repository (`*.repo.ts` static class)
+→ TypeORM
+
+Repositories MUST NOT import services.
+
+Server actions MUST NOT:
+- import repositories
+- import TypeORM
+- contain heavy business logic
+
+Server actions call:
+- services
+- shared utilities
+
+only.
+
+Prefer extending an existing:
+- Service
+- Repository
+- Action
+- DTO
+- utility
+
+over introducing parallel layers.
+
+Do NOT introduce:
+- use cases
+- commands
+- handlers
+- DI containers
+- generic repositories
+- CQRS-style abstractions
+- enterprise wrappers not already present
+
+Placement:
+- actions → `src/lib/actions/`
+- services → `src/lib/services/`
+- repos → `src/lib/repositories/`
+- entities → `src/lib/entities/`
+- shared interfaces → `src/lib/dtos/`
+- enums → `src/lib/enums/`
+- feature UI beside route `page.tsx`
+
+---
+
+# Module boundaries
+
+Preserve existing module/domain boundaries.
+
+Do NOT:
+- move business logic across domains unnecessarily
+- centralize unrelated domain logic
+- tightly couple unrelated modules
+- create cross-module abstractions prematurely
+
+Prefer local cohesion.
+
+---
+
+# Naming
+
+Prefer server action exports:
+
+`_verbNoun`
+
+Example:
+- `_getTicketById`
+- `_createTender`
+
+Match sibling naming conventions in the current module.
+Do not mass-rename unrelated code.
+
+Services:
+- `FooService`
+- static methods only
+
+Repositories:
+- `FooRepository`
+- `private static async getRepo()`
+
+React component files:
+- PascalCase
+
+DTOs:
+- `CreateThingDto`
+- `UpdateThingDto`
+- `ThingResponseDto`
+
+Types/interfaces should remain explicit and descriptive.
+
+---
+
+# Dependencies & imports
+
+Use path alias:
+- `@/*`
+
+Prefer:
+- `@/src/lib/...`
+
+when neighboring files already use that convention.
+
+Avoid deep relative imports when aliases already exist.
+
+Do not introduce unnecessary dependencies if equivalent utilities already exist internally.
+
+Before creating:
+- utility functions
+- DTOs
+- hooks
+- repositories
+- services
+- validators
+- helpers
+
+search the codebase for reusable implementations first.
+
+---
+
+# Server actions
+
+Use `"use server"` where server actions are exported.
+
+Logged-in actions:
+- use `protectedAction`
+- from `src/lib/protected-action.ts`
+
+Handler signature:
+- `(session, ...args)`
+
+Do not re-validate:
+- session existence
+- `session.user.id`
+
+inside handlers.
+
+Authentication responsibility belongs to:
+- `protected-action.ts`
+
+Use:
+- `Number(session.user.id)`
+
+for numeric user ids.
+
+`protectedAction` may throw `"Unauthorized"`.
+
+Do not assume only `ActionResponse` failures.
+
+Return:
+- `Promise<ActionResponse<T>>`
+
+from:
+- `src/lib/utils/action-response.ts`
+
+Shape:
+- `success`
+- `data?`
+- `error?`
+
+Validate domain ids at action boundaries.
+
+Example:
+- `Number.isFinite(id) && id > 0`
+
+Error handling:
+- `console.error`
+- `getErrorMessage`
+- from `src/lib/utils/error.ts`
+
+Do not use ad-hoc:
+- `instanceof Error`
+- `String(error)`
+
+patterns unless already required locally.
+
+---
+
+# Services & repositories
+
+Services:
+- orchestrate business logic
+- remain static
+- contain domain rules
+- serialize data for UI
+
+Prefer:
+- `serialize(...)`
+- `serializeThing(...)`
+
+Do not leak raw entities to UI when sibling modules serialize.
+
+Repositories:
+- use `getDataSource()`
+- use `getRepository()`
+
+Repository responsibility:
+- persistence only
+
+Repositories SHOULD NOT:
+- orchestrate business logic
+- contain UI logic
+- call services
+
+Persistence-scoped types:
+- `Search*`
+- `Create*Input`
+- `Update*Input`
+
+may remain colocated with repositories.
+
+New tables/columns require:
+- entity update
+- `src/lib/db/data-source.ts`
+- migration generation
+
+Use:
+- `pnpm migration:*`
+
+---
+
+# Validation & dates
+
+Primary validation style:
+- imperative guards
+- action/service validation
+
+Do not introduce blanket Zod validation everywhere unless already established in that module.
+
+Zod is primarily used for:
+- auth credentials
+- existing validated flows
+
+Date handling:
+- prefer Temporal APIs
+- `Temporal.Instant.from`
+- `try/catch`
+- `RangeError`
+
+Use `Date` only at:
+- TypeORM boundaries
+- external library boundaries
+
+If Temporal is introduced:
+- ensure `@js-temporal/polyfill`
+- when runtime support is uncertain
+
+---
+
+# State management
+
+Default:
+- server data
+- props
+- server actions
+- `router.refresh`
+
+Use local React state before introducing global state.
+
+Prefer:
+- `useState`
+
+Avoid introducing:
+- Zustand
+- Context
+- global stores
+
+for ordinary CRUD/domain data.
+
+`UserProvider` / `useUser`
+- for session-derived display state only.
+
+Zustand:
+- only where already established
+- currently theme/global UI state
+
+Do not introduce new global stores without strong existing precedent.
+
+Do not introduce `useTransition` unless surrounding files already use it.
+
+---
+
+# Auth & tenancy
+
+`src/proxy.ts`
+- drives route protection
+- together with `auth.config`
+
+`protectedAction`
+- is the action-level session gate
+
+Org-scoped mutations MUST enforce:
+- membership
+- authorization
+- ownership
+
+through domain services.
+
+Examples:
+- `OrganizationMemberService`
+- `ServiceTicketService.ensureUserMembershipForTicket`
+
+Do not skip authorization because UI hides actions/buttons.
+
+Route handlers:
+- use `await auth()`
+- mirror sibling status codes
+- `401`
+- `403`
+- `400`
+
+When using route context params:
+- `await context.params`
+
+because params are Promise-based in current route types.
+
+---
+
+# API routes
+
+Use:
+- `runtime = "nodejs"`
+
+where:
+- TypeORM
+- Node APIs
+
+are required.
+
+Prefer delegating domain logic to services.
+
+Prefer JSON response shapes aligned with:
+- `ActionResponse`
+
+Example:
+```ts
+{
+  success: true,
+  data
+}
+```
+
+---
+
+# UI
+
+Provider panel copy:
+- Spanish by default
+
+unless surrounding module is clearly English-only.
+
+Notifications:
+- `sonner`
+- `toastError`
+- `toastSuccess`
+
+Follow the pattern already used by neighboring files.
+
+Generated UI code should:
+- remain concise
+- avoid excessive abstraction
+- match neighboring structure
+- avoid unnecessary wrappers
+- prioritize readability
+
+Avoid excessive comments unless code complexity genuinely requires them.
+
+---
+
+# Refactoring philosophy
+
+Prefer:
+- localized refactors
+- incremental cleanup
+- consistency improvements
+
+Avoid:
+- broad rewrites
+- architecture churn
+- mass renames
+- speculative refactors
+
+Preserve:
+- exports
+- public interfaces
+- stable contracts
+
+unless explicitly requested otherwise.
+
+Refactors SHOULD:
+- reduce duplication
+- simplify complexity
+- preserve behavior
+- align with existing patterns
+
+---
+
+# AI anti-overengineering rules
+
+Avoid AI-style overengineering.
+
+Do NOT introduce:
+- unnecessary abstractions
+- speculative extensibility
+- generic wrappers
+- abstract factories
+- repository base classes
+- unnecessary interfaces
+- excessive indirection
+- premature optimization
+- “enterprise” patterns not already present
+
+Prefer:
+- simple
+- typed
+- explicit
+- composable
+- maintainable
+
+solutions.
+
+---
+
+# Output expectations
+
+Generated code should be:
+- production-oriented
+- strongly typed
+- concise
+- readable
+- consistent
+- maintainable
+
+Prefer:
+- explicitness
+- stable patterns
+- low cognitive overhead
+
+over cleverness.
+
+---
+
+# Forbidden
+
+Forbidden patterns:
+
+- importing repositories from actions
+- importing TypeORM directly from actions
+- repository → service cycles
+- business-heavy server actions
+- leaking raw entities to client
+- introducing new global stores for CRUD data
+- introducing new architectural layers
+- introducing unnecessary abstractions
+- `any`
+- `Record<string, any>`
+- speculative patterns
+- rewriting stable modules unnecessarily
+
+Do not introduce:
+- alternative architectures
+- parallel abstractions
+- duplicate implementations
+
+when an existing project pattern already solves the problem.
+
+---
+
+# Reuse-first policy
+
+Before implementing new functionality:
+
+1. search for similar implementations
+2. identify reusable services/utilities
+3. mirror the closest stable feature
+4. preserve local consistency
+
+Preferred reference modules:
+- lead follow-up
+- organizations
+- tenders
+
+Copy the shape of the closest existing implementation before inventing anything new.
+
+---
+
+# Commits / PRs
+
+Do NOT:
+- `git commit`
+- `git push`
+- `gh pr`
+
+unless explicitly requested by the user.

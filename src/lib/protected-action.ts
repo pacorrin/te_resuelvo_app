@@ -7,7 +7,12 @@ export function protectedAction<Args extends unknown[], Return>(
   return async (...args: Args): Promise<Return> => {
     const session = await auth();
 
-    if (!session) {
+    if (!session?.user) {
+      throw new Error("Unauthorized");
+    }
+
+    const userId = Number(session.user.id);
+    if (!Number.isFinite(userId)) {
       throw new Error("Unauthorized");
     }
 

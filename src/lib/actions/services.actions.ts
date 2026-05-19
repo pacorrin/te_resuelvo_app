@@ -26,15 +26,17 @@ export const _findServices = protectedAction(
       const services = await ServiceService.findBy(searchParams);
       return { success: true, data: services };
     } catch (error) {
-      return { success: false, error: error instanceof Error ? error.message : String(error) };
+      return { success: false, error: getErrorMessage(error) };
     }
   },
 );
 
-export const _getServiceQuestionSet = async (
-  _: unknown,
-  serviceId: number
-): Promise<ActionResponse<QuestionSetClientDTO | null>> => {
+export async function _getServiceQuestionSet(
+  serviceId: number,
+): Promise<ActionResponse<QuestionSetClientDTO | null>> {
+  if (!Number.isFinite(serviceId) || serviceId <= 0) {
+    return { success: false, error: "Identificador de servicio inválido." };
+  }
   try {
     const questionSet = await ServiceService.getServiceQuestionSet(serviceId);
     return {
@@ -43,6 +45,6 @@ export const _getServiceQuestionSet = async (
     };
   } catch (error) {
     console.error("Error getting service question set:", error);
-    return { success: false, error: error instanceof Error ? error.message : String(error) };
+    return { success: false, error: getErrorMessage(error) };
   }
-};
+}

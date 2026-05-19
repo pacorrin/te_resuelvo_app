@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/src/components/ui/card";
 import { TenderPaymentStatus } from "@/src/lib/enums/tender.enum";
+import { getErrorMessage } from "@/src/lib/utils/error";
 
 type PaymentStatusResponse = {
   success: boolean;
@@ -80,7 +81,7 @@ export default function ProcessingCheckoutClient({
         timer = setTimeout(checkStatus, 3000);
       } catch (err) {
         if (cancelled) return;
-        setError(err instanceof Error ? err.message : "Error consultando el pago.");
+        setError(getErrorMessage(err));
         timer = setTimeout(checkStatus, 3000);
       }
     };

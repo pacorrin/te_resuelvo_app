@@ -1,7 +1,7 @@
 "use server";
 
-import { OrganizationMemberRepository } from "@/src/lib/repositories/OrganizationMember.repo";
 import { QuestionSetAnswerService } from "@/src/lib/services/question-set-answer.service";
+import { OrganizationMemberService } from "@/src/lib/services/organization-member.service";
 import { ActionResponse } from "@/src/lib/utils/action-response";
 import { getErrorMessage } from "@/src/lib/utils/error";
 import { protectedAction } from "@/src/lib/protected-action";
@@ -18,16 +18,13 @@ export const _getTenderQuestionAnswersForOrgAction = protectedAction(
     tenderId: number,
   ): Promise<ActionResponse<TenderQuestionAnswerRow[]>> => {
     try {
-      const userId = Number(session.user?.id);
-      if (!Number.isFinite(userId)) {
-        return { success: false, error: "Sesión inválida" };
-      }
-
-      const membership = await OrganizationMemberRepository.findOneBy({
-        userId,
-        organizationId,
-      });
-      if (!membership) {
+      const userId = Number(session.user.id);
+      const isMember =
+        await OrganizationMemberService.userBelongsToOrganization(
+          userId,
+          organizationId,
+        );
+      if (!isMember) {
         return {
           success: false,
           error: "No tienes acceso a esta organización.",

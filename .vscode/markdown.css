@@ -1,0 +1,424 @@
+/* =========================================================
+   VSCode Markdown Preview
+   Dark Graphite Theme
+   Optimized for long-form reading
+   Compatible with:
+   - Native VSCode Markdown Preview
+   - Markdown Preview Github Styling
+   ========================================================= */
+
+   :root {
+    /* =====================================================
+       CORE PALETTE
+       ===================================================== */
+  
+    --bg-primary: #0b0d10;
+    --bg-secondary: #111418;
+    --bg-tertiary: #171b21;
+  
+    --surface-1: #14181d;
+    --surface-2: #1a1f26;
+    --surface-3: #222831;
+  
+    --border-1: #2a313b;
+    --border-2: #343c47;
+  
+    --text-primary: #d7dde5;
+    --text-secondary: #a7b0ba;
+    --text-muted: #7f8893;
+  
+    --accent: #7ab0ff;
+    --accent-hover: #9bc4ff;
+  
+    --code-inline: #ffbe7a;
+    --code-block-text: #d7dde5;
+  
+    --success: #89d185;
+    --warning: #e6c07b;
+    --danger: #ff8c8c;
+  
+    --selection: rgba(122, 176, 255, 0.18);
+  }
+  
+  /* =========================================================
+     BODY
+     ========================================================= */
+  
+  html,
+  body,
+  .markdown-body,
+  .vscode-body {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+  
+    font-family:
+      Inter,
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  
+    font-size: 17px;
+    line-height: 1.8;
+  
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+  
+  .markdown-body {
+    max-width: 940px;
+    margin: auto;
+    padding: 48px;
+  }
+  
+  /* =========================================================
+     HEADINGS
+     ========================================================= */
+  
+  .markdown-body h1,
+  .markdown-body h2,
+  .markdown-body h3,
+  .markdown-body h4,
+  .markdown-body h5,
+  .markdown-body h6 {
+    color: #f3f6fa !important;
+    font-weight: 700;
+    line-height: 1.25;
+  
+    margin-top: 2em;
+    margin-bottom: 0.8em;
+  }
+  
+  .markdown-body h1 {
+    font-size: 2.3rem;
+    border-bottom: 1px solid var(--border-1);
+    padding-bottom: 0.45em;
+  }
+  
+  .markdown-body h2 {
+    font-size: 1.8rem;
+    border-bottom: 1px solid var(--border-1);
+    padding-bottom: 0.35em;
+  }
+  
+  .markdown-body h3 {
+    font-size: 1.45rem;
+    color: #cfe1ff !important;
+  }
+  
+  .markdown-body h4 {
+    font-size: 1.2rem;
+    color: #b9d1f5 !important;
+  }
+  
+  .markdown-body h5,
+  .markdown-body h6 {
+    color: var(--text-secondary) !important;
+  }
+  
+  /* =========================================================
+     PARAGRAPHS
+     ========================================================= */
+  
+  .markdown-body p {
+    color: var(--text-primary) !important;
+    margin: 1.1em 0;
+  }
+  
+  .markdown-body strong {
+    color: #ffffff !important;
+    font-weight: 700;
+  }
+  
+  .markdown-body em {
+    color: #d0d7de !important;
+  }
+  
+  .markdown-body del {
+    color: var(--text-muted) !important;
+  }
+  
+  /* =========================================================
+     LINKS
+     ========================================================= */
+  
+  .markdown-body a {
+    color: var(--accent) !important;
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+  
+  .markdown-body a:hover {
+    color: var(--accent-hover) !important;
+    text-decoration: underline;
+  }
+  
+  /* =========================================================
+     LISTS
+     ========================================================= */
+  
+  .markdown-body ul,
+  .markdown-body ol {
+    padding-left: 2em;
+  }
+  
+  .markdown-body li {
+    margin: 0.45em 0;
+    color: var(--text-primary) !important;
+  }
+  
+  .markdown-body li::marker {
+    color: #91bfff;
+  }
+  
+  /* =========================================================
+     BLOCKQUOTES
+     ========================================================= */
+  
+  .markdown-body blockquote {
+    background: rgba(255, 255, 255, 0.025) !important;
+  
+    border-left: 4px solid #5f8fd8 !important;
+  
+    color: var(--text-secondary) !important;
+  
+    margin: 1.8em 0;
+    padding: 1em 1.3em;
+  
+    border-radius: 8px;
+  }
+  
+  .markdown-body blockquote p {
+    margin: 0.4em 0;
+  }
+  
+  /* =========================================================
+     INLINE CODE
+     ========================================================= */
+  
+  .markdown-body code {
+    background: var(--surface-2) !important;
+    color: var(--code-inline) !important;
+  
+    padding: 0.2em 0.45em;
+    border-radius: 6px;
+  
+    font-size: 0.92em;
+  
+    font-family:
+      "JetBrains Mono",
+      "Fira Code",
+      Consolas,
+      monospace;
+  }
+  
+  /* =========================================================
+     CODE BLOCKS
+     ========================================================= */
+  
+  .markdown-body pre {
+    background: var(--surface-1) !important;
+  
+    border: 1px solid var(--border-1) !important;
+  
+    border-radius: 14px;
+  
+    padding: 20px;
+    margin: 1.8em 0;
+  
+    overflow-x: auto;
+  }
+  
+  .markdown-body pre code {
+    background: transparent !important;
+    color: var(--code-block-text) !important;
+  
+    padding: 0;
+    border-radius: 0;
+  
+    line-height: 1.75;
+  }
+  
+  /* =========================================================
+     TABLES
+     ========================================================= */
+  
+  .markdown-body table,
+  .markdown-body table thead,
+  .markdown-body table tbody,
+  .markdown-body table tr,
+  .markdown-body table td,
+  .markdown-body table th,
+  .vscode-body table,
+  .vscode-body td,
+  .vscode-body th {
+    background-color: var(--surface-1) !important;
+    color: var(--text-primary) !important;
+  }
+  
+  .markdown-body table {
+    width: 100%;
+    margin: 2em 0;
+  
+    border-collapse: collapse !important;
+  
+    border: 1px solid var(--border-1) !important;
+  
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .markdown-body table th {
+    background: var(--surface-3) !important;
+  
+    color: #f5f7fa !important;
+  
+    text-align: left;
+  
+    padding: 15px;
+  
+    border: 1px solid var(--border-2) !important;
+  }
+  
+  .markdown-body table td {
+    background: var(--surface-1) !important;
+  
+    padding: 15px;
+  
+    border: 1px solid var(--border-1) !important;
+  }
+  
+  .markdown-body table tr:nth-child(even) td {
+    background: #101419 !important;
+  }
+  
+  .markdown-body table tr:hover td {
+    background: #1a2028 !important;
+  }
+  
+  /* =========================================================
+     HORIZONTAL RULE
+     ========================================================= */
+  
+  .markdown-body hr {
+    border: none;
+    border-top: 1px solid var(--border-1);
+  
+    margin: 3em 0;
+  }
+  
+  /* =========================================================
+     IMAGES
+     ========================================================= */
+  
+  .markdown-body img {
+    display: block;
+  
+    max-width: 100%;
+  
+    margin: 2em auto;
+  
+    border-radius: 12px;
+  
+    box-shadow:
+      0 10px 30px rgba(0, 0, 0, 0.35);
+  }
+  
+  /* =========================================================
+     CHECKBOXES
+     ========================================================= */
+  
+  .markdown-body input[type="checkbox"] {
+    transform: scale(1.1);
+    margin-right: 0.5em;
+  }
+  
+  /* =========================================================
+     SELECTION
+     ========================================================= */
+  
+  ::selection {
+    background: var(--selection);
+  }
+  
+  /* =========================================================
+     SCROLLBAR
+     ========================================================= */
+  
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #303844;
+    border-radius: 999px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3b4552;
+  }
+  
+  /* =========================================================
+     TYPOGRAPHY SPACING
+     ========================================================= */
+  
+  .markdown-body > *:first-child {
+    margin-top: 0;
+  }
+  
+  .markdown-body > *:last-child {
+    margin-bottom: 0;
+  }
+  
+  .markdown-body h1 + p,
+  .markdown-body h2 + p,
+  .markdown-body h3 + p {
+    margin-top: 0.5em;
+  }
+  
+  /* =========================================================
+     MARKDOWN ALERTS
+     ========================================================= */
+  
+  .markdown-alert {
+    background: var(--surface-1) !important;
+    border: 1px solid var(--border-1) !important;
+    border-radius: 10px;
+  }
+  
+  /* =========================================================
+     GITHUB-COMPATIBILITY FIXES
+     ========================================================= */
+  
+  .markdown-body,
+  .markdown-preview-view {
+    background-image: none !important;
+  }
+  
+  /* Force all accidental white containers dark */
+  
+  .markdown-body div,
+  .markdown-body section,
+  .markdown-body article {
+    background-color: transparent;
+  }
+  
+  /* =========================================================
+     OPTIONAL:
+     uncomment for subtle glass effect
+     ========================================================= */
+  
+  /*
+  .markdown-body pre,
+  .markdown-body table,
+  .markdown-body blockquote {
+    backdrop-filter: blur(8px);
+  }
+  */

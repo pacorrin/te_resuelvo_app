@@ -84,6 +84,24 @@ export class OrganizationMemberService {
     return memberships.length > 0;
   }
 
+  static async userBelongsToOrganization(
+    userId: number,
+    organizationId: number,
+  ): Promise<boolean> {
+    if (
+      !Number.isFinite(userId) ||
+      !Number.isFinite(organizationId) ||
+      organizationId <= 0
+    ) {
+      return false;
+    }
+    const membership = await OrganizationMemberRepository.findOneBy(
+      { userId, organizationId },
+      [],
+    );
+    return membership != null;
+  }
+
   static async getMemberById(
     id: number,
     relations: ("organization" | "user")[] = [],

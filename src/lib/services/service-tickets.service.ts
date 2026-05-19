@@ -15,6 +15,7 @@ import { saveRequestBodyToLocalFile } from "@/src/lib/storage/local-storage.serv
 import { FileCategory, FileOwnerType } from "@/src/lib/storage/storage.enums";
 import { TenderClientListDTO } from "../dtos/Tenders.dto";
 import { FileService } from "./file.service";
+import { OrganizationMemberService } from "./organization-member.service";
 import { TenderService } from "./tender.service";
 import { ServiceTicketStatusHistoryService } from "./service-ticket-status-history.service";
 
@@ -84,6 +85,30 @@ export class ServiceTicketService {
     );
     if (!row) return null;
     return this.serialize(row);
+  }
+
+  /** Ensures `userId` belongs to the organization that owns `ticketId`. */
+  static async ensureUserMembershipForTicket(
+    userId: number,
+    ticketId: number,
+    accessDeniedMessage = "No tienes acceso a este ticket.",
+  ): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (!Number.isFinite(ticketId) || ticketId <= 0) {
+      return { ok: false, error: "Identificador de ticket inválido." };
+    }
+    const ticket = await this.getById(ticketId, []);
+    if (!ticket) {
+      return { ok: false, error: "Ticket no encontrado." };
+    }
+    const belongs =
+      await OrganizationMemberService.userBelongsToOrganization(
+        userId,
+        ticket.organizationId,
+      );
+    if (!belongs) {
+      return { ok: false, error: accessDeniedMessage };
+    }
+    return { ok: true };
   }
 
   static async getAllBy(

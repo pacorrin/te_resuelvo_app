@@ -9,7 +9,7 @@ import {
 } from "../dtos/Tenders.dto";
 import { ActionResponse } from "../utils/action-response";
 import { protectedAction } from "../protected-action";
-import { OrganizationMemberRepository } from "../repositories/OrganizationMember.repo";
+import { OrganizationMemberService } from "../services/organization-member.service";
 import { TenderBuyerService } from "../services/tender-buyer.service";
 
 export async function _createTenderFromPublicSiteAction(
@@ -85,16 +85,14 @@ export const _getTendersForOrganizationCoverageAction = protectedAction(
     organizationId: number,
   ): Promise<ActionResponse<TenderClientListDTO[]>> => {
     try {
-      const userId = Number(session.user?.id);
-      if (!Number.isFinite(userId)) {
-        return { success: false, error: "Sesión inválida" };
-      }
+      const userId = Number(session.user.id);
 
-      const membership = await OrganizationMemberRepository.findOneBy({
-        userId,
-        organizationId,
-      });
-      if (!membership) {
+      const isMember =
+        await OrganizationMemberService.userBelongsToOrganization(
+          userId,
+          organizationId,
+        );
+      if (!isMember) {
         return {
           success: false,
           error: "No tienes acceso a esta organización.",
@@ -118,16 +116,14 @@ export const _getPurchasedTendersForOrganizationAction = protectedAction(
     organizationId: number,
   ): Promise<ActionResponse<TenderClientListDTO[]>> => {
     try {
-      const userId = Number(session.user?.id);
-      if (!Number.isFinite(userId)) {
-        return { success: false, error: "Sesión inválida" };
-      }
+      const userId = Number(session.user.id);
 
-      const membership = await OrganizationMemberRepository.findOneBy({
-        userId,
-        organizationId,
-      });
-      if (!membership) {
+      const isMember =
+        await OrganizationMemberService.userBelongsToOrganization(
+          userId,
+          organizationId,
+        );
+      if (!isMember) {
         return {
           success: false,
           error: "No tienes acceso a esta organización.",
