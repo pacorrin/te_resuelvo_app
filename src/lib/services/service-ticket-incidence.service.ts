@@ -14,6 +14,8 @@ export interface ServiceTicketIncidenceDTO {
   type: ServiceTicketIncidenceType;
   description: string;
   createdAt: Date;
+  registeredById: number | null;
+  registeredByName: string | null;
 }
 
 export interface ServiceTicketIncidenceEvidenceBundleDTO {
@@ -36,6 +38,8 @@ export class ServiceTicketIncidenceService {
       type: row.type,
       description: row.description,
       createdAt: row.createdAt,
+      registeredById: row.createdById ?? null,
+      registeredByName: row.createdBy?.name?.trim() || null,
     };
   }
 
@@ -45,7 +49,7 @@ export class ServiceTicketIncidenceService {
     if (!Number.isFinite(ticketId) || ticketId <= 0) return [];
     const rows = await ServiceTicketIncidenceRepository.findAllByTicketId(
       ticketId,
-      [],
+      ["createdBy"],
     );
     return rows.map((r) => this.serialize(r));
   }
@@ -77,6 +81,7 @@ export class ServiceTicketIncidenceService {
     ticketId: number,
     input: Omit<CreateServiceTicketIncidenceInput, "ticketId">,
     evidenceFiles: File[] = [],
+    createdById?: number,
   ): Promise<ServiceTicketIncidenceCreateResult | null> {
     if (!Number.isFinite(ticketId) || ticketId <= 0) return null;
 
@@ -84,8 +89,14 @@ export class ServiceTicketIncidenceService {
       ticketId,
       type: input.type,
       description: input.description,
+      createdById:
+        Number.isFinite(createdById) && createdById! > 0 ? createdById : null,
     });
-    const incidence = this.serialize(row);
+    const reloaded = await ServiceTicketIncidenceRepository.findOneBy(
+      { id: row.id },
+      ["createdBy"],
+    );
+    const incidence = this.serialize(reloaded ?? row);
 
     const evidenceUploaded: FileDTO[] = [];
     const evidenceUploadErrors: string[] = [];

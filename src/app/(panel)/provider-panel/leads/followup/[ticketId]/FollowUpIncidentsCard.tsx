@@ -20,6 +20,7 @@ import {
   Paperclip,
   Plus,
   Table2,
+  User,
   X,
   XCircle,
 } from "lucide-react";
@@ -705,9 +706,17 @@ export default function FollowUpIncidentsCard({
                               {getIncidentLabel(slug)}
                             </div>
                           </div>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {formatIncidentDate(incident.createdAt)}
-                          </span>
+                          <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-muted-foreground">
+                            <span className="whitespace-nowrap">
+                              {formatIncidentDate(incident.createdAt)}
+                            </span>
+                            {incident.registeredByName ? (
+                              <span className="inline-flex max-w-[12rem] items-center gap-1 truncate sm:max-w-none">
+                                <User className="h-3 w-3 shrink-0 text-secondary" />
+                                {incident.registeredByName}
+                              </span>
+                            ) : null}
+                          </div>
                         </div>
                         <p className="text-sm break-words whitespace-pre-wrap">
                           <span

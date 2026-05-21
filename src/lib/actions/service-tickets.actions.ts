@@ -188,6 +188,73 @@ export const _updateTicketStatus = protectedAction(
   },
 );
 
+function sortQuoteFilesByNewest(files: FileDTO[]): FileDTO[] {
+  return [...files].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+}
+
+export const _listServiceTicketQuoteFiles = protectedAction(
+  async (
+    session,
+    ticketId: number,
+  ): Promise<ActionResponse<FileDTO[]>> => {
+    const userId = Number(session.user.id);
+    if (!Number.isFinite(ticketId) || ticketId <= 0) {
+      return { success: false, error: "Identificador de ticket inválido." };
+    }
+    try {
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
+      const files = await FileService.getByOwner(
+        FileOwnerType.SERVICE_TICKET_QUOTE,
+        ticketId,
+      );
+      return { success: true, data: sortQuoteFilesByNewest(files) };
+    } catch (error) {
+      console.error("Error listing service ticket quotes:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
+export const _deleteServiceTicketQuote = protectedAction(
+  async (
+    session,
+    ticketId: number,
+    fileId: number,
+  ): Promise<ActionResponse<void>> => {
+    const userId = Number(session.user.id);
+    if (!Number.isFinite(ticketId) || ticketId <= 0) {
+      return { success: false, error: "Identificador de ticket inválido." };
+    }
+    if (!Number.isFinite(fileId) || fileId <= 0) {
+      return { success: false, error: "Identificador de archivo inválido." };
+    }
+    try {
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+        "No tienes acceso a eliminar archivos de este ticket.",
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
+      await ServiceTicketService.deleteQuote(ticketId, fileId);
+      return { success: true };
+    } catch (error) {
+      console.error("Error deleting service ticket quote:", error);
+      return { success: false, error: getErrorMessage(error) };
+    }
+  },
+);
+
 export const _getServiceTicketQuoteFile = protectedAction(
   async (
     session,

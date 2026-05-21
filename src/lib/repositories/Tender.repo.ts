@@ -178,6 +178,59 @@ export class TenderRepository {
     return repo.save(tender);
   }
 
+  static async findAllByCustomerId(
+    customerId: number,
+    relations: ("service" | "customer")[] = [],
+  ): Promise<Tender[]> {
+    const repo = await this.getRepo();
+    return repo.find({
+      where: { customerId },
+      relations,
+      order: { id: "DESC" },
+    });
+  }
+
+  static async findByIdWithRelations(
+    id: number,
+    relations: ("service" | "customer")[] = ["service", "customer"],
+  ): Promise<Tender | null> {
+    const repo = await this.getRepo();
+    return repo.findOne({
+      where: { id },
+      relations,
+    });
+  }
+
+  static async findLatestByCustomerEmail(email: string): Promise<Tender | null> {
+    const repo = await this.getRepo();
+    return repo
+      .createQueryBuilder("tender")
+      .innerJoin("tender.customer", "customer")
+      .where("LOWER(customer.email) = LOWER(:email)", {
+        email: email.trim(),
+      })
+      .orderBy("tender.id", "DESC")
+      .getOne();
+  }
+
+  static async findByCustomerEmailAndAccessCode(
+    email: string,
+    accessCode: string,
+  ): Promise<Tender[]> {
+    const repo = await this.getRepo();
+    return repo
+      .createQueryBuilder("tender")
+      .innerJoinAndSelect("tender.customer", "customer")
+      .leftJoinAndSelect("tender.service", "service")
+      .where("LOWER(customer.email) = LOWER(:email)", {
+        email: email.trim(),
+      })
+      .andWhere("tender.customerAccessCode = :accessCode", {
+        accessCode: accessCode.trim(),
+      })
+      .getMany();
+  }
+
   static async updateTender(
     id: number,
     data: Partial<Tender>,

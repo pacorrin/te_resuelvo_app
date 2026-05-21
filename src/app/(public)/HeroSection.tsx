@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { ClipboardList } from "lucide-react";
+import { Button } from "@/src/components/ui/button";
 import { HeroRequestCard } from "./HeroRequestCard";
 
 export function HeroSection() {
@@ -22,6 +25,14 @@ export function HeroSection() {
             Encuentra profesionales verificados en minutos para más de 200
             servicios. Rápido, seguro y listo cuando lo necesitas.
           </p>
+          <div className="mt-6 flex justify-center">
+            <Button variant="outline" size="lg" asChild>
+              <Link href="/seguimiento">
+                <ClipboardList className="mr-2 size-4" />
+                Seguimiento de mi solicitud
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card p-6 shadow-xl shadow-slate-900/5 md:p-8 lg:p-10">

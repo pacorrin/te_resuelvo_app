@@ -9,4 +9,5 @@ export interface CreateServiceTicketIncidenceInput {
   ticketId: number;
   type: ServiceTicketIncidenceType;
   description: string;
+  createdById?: number;
 }

@@ -35,6 +35,29 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
 
+## Email (SMTP)
+
+Transactional emails use React Email templates and Nodemailer. Add these variables to `.env.local`:
+
+```env
+SMTP_HOST=mail.your-domain.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=your-smtp-user
+SMTP_PASS=your-smtp-password
+EMAIL_FROM=noreply@your-domain.com
+EMAIL_FROM_NAME=Te Resuelvo
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+In **development**, if `SMTP_HOST` is unset, codes are printed to the server console instead of being sent (register verification and customer portal access).
+
+Preview email templates locally:
+
+```bash
+pnpm email:dev
+```
+
 ## TypeORM
 
 ```bash

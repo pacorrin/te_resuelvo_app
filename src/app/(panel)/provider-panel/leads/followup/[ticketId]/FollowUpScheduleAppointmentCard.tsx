@@ -465,7 +465,7 @@ export default function FollowUpScheduleAppointmentCard({
               <CheckCircle2 className="h-6 w-6 text-blue-600 dark:text-blue-300 mt-0.5 shrink-0" />
               <div>
                 <h3 className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-1">
-                  Primera visita completada
+                  Primera visita realizada
                 </h3>
                 <p className="text-xs text-blue-900 dark:text-blue-200">
                   {firstVisitCompletedWhen.date ? (

@@ -15,6 +15,10 @@ import {
   QUESTION_SET_ANSWER_ENTITY_TENDER,
 } from "./question-set-answer.service";
 import { ServiceTicketRepository } from "../repositories/ServiceTickets.repo";
+import { CustomerTenderAccessService } from "./customer-tender-access.service";
+import { EmailService } from "./email.service";
+import { ServiceRepository } from "../repositories/Service.repo";
+import { getTenderNumber } from "../utils/tender.utils";
 
 export class TenderService {
   static serializeTenderClientList(tender: Tender): TenderClientListDTO {
@@ -94,6 +98,13 @@ export class TenderService {
       customerId: user?.id,
     });
 
+    let accessCode: string | null = null;
+    if (tender.id) {
+      accessCode = await CustomerTenderAccessService.assignAccessCodeForTender(
+        tender.id,
+      );
+    }
+
     if (questionSetAnswers?.length) {
       await Promise.all(
         questionSetAnswers.map((row) => 
@@ -108,7 +119,20 @@ export class TenderService {
       );
     }
 
-    // TODO: Send tender email to the customer
+    if (tender.id && accessCode && email.trim()) {
+      const service = await ServiceRepository.findOneBy(
+        { id: tender.serviceId },
+        ["name"],
+      );
+      await EmailService.sendCustomerTenderCreated({
+        to: email.trim(),
+        personName,
+        requestNumber: getTenderNumber(tender.id),
+        serviceName: service?.name ?? "Servicio solicitado",
+        accessCode,
+      });
+    }
+
     return tender;
   }
 

@@ -15,15 +15,24 @@ import { ActionResponse } from "../utils/action-response";
 
 export const createServiceTicketIncidence = protectedAction(
   async (
-    _,
+    session,
     { ticketId, type, description }: CreateServiceTicketIncidenceInput,
     evidenceFiles: File[] = [],
   ): Promise<ActionResponse<ServiceTicketIncidenceCreateResult | null>> => {
+    const userId = Number(session.user.id);
     try {
+      const access = await ServiceTicketService.ensureUserMembershipForTicket(
+        userId,
+        ticketId,
+      );
+      if (!access.ok) {
+        return { success: false, error: access.error };
+      }
       const result = await ServiceTicketIncidenceService.create(
         ticketId,
         { type, description },
         evidenceFiles,
+        userId,
       );
       if (!result) {
         return { success: false, error: "No se pudo crear la incidencia." };

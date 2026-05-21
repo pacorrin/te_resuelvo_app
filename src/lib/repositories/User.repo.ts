@@ -2,6 +2,7 @@ import { getDataSource } from "@/src/lib/db/connection";
 import { User } from "@/src/lib/entities/User.entity";
 import { Repository } from "typeorm";
 import { SearchUser } from "../dtos/Users.dto";
+import { UserType } from "../enums/user.enum";
 
 export class UserRepository {
   private static async getRepo(): Promise<Repository<User>> {

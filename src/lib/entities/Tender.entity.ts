@@ -54,6 +54,14 @@ export class Tender {
   @Column({ name: "tend_zipcode", type: "varchar", length: 10 })
   zipcode!: string;
 
+  @Column({
+    name: "tend_customer_access_code",
+    type: "varchar",
+    length: 6,
+    nullable: true,
+  })
+  customerAccessCode!: string | null;
+
   @CreateDateColumn({ name: "tend_created_at", type: "timestamp" })
   createdAt!: string;
 }

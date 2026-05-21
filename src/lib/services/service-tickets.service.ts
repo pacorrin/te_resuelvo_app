@@ -11,7 +11,10 @@ import {
   UpdateServiceTicketInput,
 } from "@/src/lib/repositories/ServiceTickets.repo";
 import { TenderRepository } from "@/src/lib/repositories/Tender.repo";
-import { saveRequestBodyToLocalFile } from "@/src/lib/storage/local-storage.service";
+import {
+  deleteLocalFileByRelativePath,
+  saveRequestBodyToLocalFile,
+} from "@/src/lib/storage/local-storage.service";
 import { FileCategory, FileOwnerType } from "@/src/lib/storage/storage.enums";
 import { TenderClientListDTO } from "../dtos/Tenders.dto";
 import { FileService } from "./file.service";
@@ -321,5 +324,20 @@ export class ServiceTicketService {
       throw new Error("File record missing");
     }
     return dto;
+  }
+
+  static async deleteQuote(ticketId: number, fileId: number): Promise<void> {
+    const file = await FileService.getById(fileId);
+    if (!file) {
+      throw new Error("Archivo no encontrado.");
+    }
+    if (
+      file.ownerType !== FileOwnerType.SERVICE_TICKET_QUOTE ||
+      file.ownerId !== ticketId
+    ) {
+      throw new Error("El archivo no pertenece a las cotizaciones de este ticket.");
+    }
+    await deleteLocalFileByRelativePath(file.relativePath);
+    await FileService.remove(fileId);
   }
 }

@@ -19,7 +19,7 @@ export class ServiceTicketIncidenceRepository {
 
   static async findOneBy(
     searchParams: SearchServiceTicketIncidence,
-    relations: ("ticket")[] = [],
+    relations: ("ticket" | "createdBy")[] = [],
   ): Promise<ServiceTicketIncidence | null> {
     const repo = await this.getRepo();
     return repo.findOne({
@@ -30,7 +30,7 @@ export class ServiceTicketIncidenceRepository {
 
   static async findAllByTicketId(
     ticketId: number,
-    relations: ("ticket")[] = [],
+    relations: ("ticket" | "createdBy")[] = [],
   ): Promise<ServiceTicketIncidence[]> {
     const repo = await this.getRepo();
     return repo.find({
@@ -48,6 +48,7 @@ export class ServiceTicketIncidenceRepository {
       ticketId: data.ticketId,
       type: data.type,
       description: data.description,
+      createdById: data.createdById ?? null,
     });
     return repo.save(row);
   }

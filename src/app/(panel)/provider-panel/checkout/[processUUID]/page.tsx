@@ -1,4 +1,3 @@
-"use server";
 import { PanelPage } from "@/src/components/PanelPage";
 import { TenderBuyerService } from "@/src/lib/services/tender-buyer.service";
 import { QuestionSetAnswerService } from "@/src/lib/services/question-set-answer.service";

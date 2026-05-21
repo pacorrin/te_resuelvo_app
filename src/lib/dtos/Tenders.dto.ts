@@ -18,6 +18,7 @@ export interface CreateTenderDTO {
   longitude: string;
   latitude: string;
   zipcode: string;
+  customerAccessCode?: string | null;
 }
 
 export interface CreateTenderFromPublicSiteDTO {

@@ -54,11 +54,16 @@ export async function POST(request: Request) {
         return new NextResponse("Tender buyer not found", { status: 400 });
       }
 
-      await ServiceTicketService.create({
+      const ticket = await ServiceTicketService.create({
         tenderId: tenderBuyer.tender.id,
         organizationId: tenderBuyer.organizationId,
-        status: ServiceTicketStatus.OPEN,
+        status: ServiceTicketStatus.PENDING,
       });
+
+      await TenderBuyerService.notifyPurchaseCompleted(
+        processUuid,
+        ticket.id,
+      );
 
       break;
     }

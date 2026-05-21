@@ -1,4 +1,5 @@
 import { UserRepository } from "@/src/lib/repositories/User.repo";
+import { EmailService } from "@/src/lib/services/email.service";
 import crypto from "node:crypto";
 import {
   UserRegister,
@@ -98,6 +99,12 @@ export class UserService {
         signupHash,
         passwordHash,
       });
+      await EmailService.sendProviderVerificationCode({
+        to: data.email,
+        code: verificationCode,
+        name: data.name,
+        signupHash,
+      });
       return { signupHash };
     }
 
@@ -114,6 +121,13 @@ export class UserService {
     if (!newUser) {
       throw new Error("Error al registrar el usuario");
     }
+
+    await EmailService.sendProviderVerificationCode({
+      to: data.email,
+      code: verificationCode,
+      name: data.name,
+      signupHash,
+    });
 
     return { signupHash };
   }
@@ -151,7 +165,11 @@ export class UserService {
   static async resendVerificationCode(
     signupHash: string,
   ): Promise<UserResendVerificationCodeResult> {
-    const user = await this.validateSignupHash(signupHash);
+    const user = await UserRepository.findOneBy({ signupHash }, [
+      "id",
+      "email",
+      "name",
+    ]);
     if (!user) {
       return { codeSent: false };
     }
@@ -159,6 +177,12 @@ export class UserService {
     await UserRepository.updateUser(user.id, {
       verificationCode,
     });
-    return { codeSent: true };
+    const sent = await EmailService.sendProviderVerificationCode({
+      to: user.email,
+      code: verificationCode,
+      name: user.name,
+      signupHash,
+    });
+    return { codeSent: sent };
   }
 }

@@ -13,8 +13,10 @@ import {
   FollowUpLeadHeaderBadge,
   FollowUpTicketStatusProvider,
 } from "./FollowUpTicketStatus";
+import { FollowUpLeadPurchaser } from "./FollowUpLeadPurchaser";
 import { PanelHeader } from "@/src/components/PanelHeader";
 import { _getTicketById } from "@/src/lib/actions/service-tickets.actions";
+import { _getTenderBuyerUserForTicket } from "@/src/lib/actions/tender-buyer.actions";
 import { getTenderNumber } from "@/src/lib/utils/tender.utils";
 import { _getTenderQuestionAnswersForOrgAction } from "@/src/lib/actions/question-set-answer.actions";
 import { _listServiceTicketIncidences } from "@/src/lib/actions/service-tickets-incidences.actions";
@@ -78,6 +80,11 @@ export default async function LeadFollowUpPage({
     membersResult.success && membersResult.members
       ? membersResult.members
       : [];
+  const purchaserResult = await _getTenderBuyerUserForTicket(ticketId);
+  const purchaser =
+    purchaserResult.success && purchaserResult.data
+      ? purchaserResult.data
+      : null;
   const tender = ticket.tender;
   if (!tender) {
     return <div>No se encontró la información del tender.</div>;
@@ -110,6 +117,9 @@ export default async function LeadFollowUpPage({
                   <p className="text-muted-foreground">
                     Gestiona y da seguimiento completo a este servicio
                   </p>
+                  {purchaser ? (
+                    <FollowUpLeadPurchaser purchaser={purchaser} />
+                  ) : null}
                 </div>
                 <FollowUpLeadHeaderBadge />
               </div>

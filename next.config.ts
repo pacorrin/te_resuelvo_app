@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["typeorm", "mysql2", "reflect-metadata"],
+  serverExternalPackages: [
+    "typeorm",
+    "mysql2",
+    "reflect-metadata",
+    "nodemailer",
+  ],
   // Server Actions default body limit is 1 MB; incidence evidence / quotes need more.
   experimental: {
     serverActions: {

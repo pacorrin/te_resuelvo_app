@@ -100,3 +100,17 @@ export async function saveRequestBodyToLocalFile({
     mimeType: contentType,
   };
 }
+
+export async function deleteLocalFileByRelativePath(
+  relativePath: string,
+): Promise<void> {
+  const absolutePath = path.join(process.cwd(), relativePath);
+  try {
+    await fsp.unlink(absolutePath);
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== "ENOENT") {
+      throw error;
+    }
+  }
+}

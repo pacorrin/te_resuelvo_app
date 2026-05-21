@@ -25,8 +25,11 @@ export const authConfig = {
       const isProtectedRoute = protectedRoutes.some((route) =>
         pathname.startsWith(route),
       );
+      const isCustomerPortalRoute = pathname.startsWith("/seguimiento");
 
       if (pathname.startsWith("/api")) return true;
+
+      if (isCustomerPortalRoute) return true;
 
       if (isProtectedRoute && !isLoggedIn) {
         return NextResponse.redirect(new URL("/login", nextUrl));

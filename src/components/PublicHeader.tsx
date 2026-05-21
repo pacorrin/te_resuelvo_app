@@ -49,6 +49,9 @@ export function PublicHeader() {
           <Button variant="ghost" className="hidden md:flex" asChild>
             <Link href="/how-it-works">Cómo funciona</Link>
           </Button>
+          <Button className="hidden md:flex" asChild>
+            <Link href="/seguimiento">Seguimiento de solicitud</Link>
+          </Button>
           {/* <ThemeToggle /> */}
           <Button variant="outline" className="text-sm md:text-base" asChild>
             <Link href="/login">
