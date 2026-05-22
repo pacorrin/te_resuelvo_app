@@ -5,6 +5,7 @@ import {
   SearchTender,
   SearchTendersNearbyByCoordinates,
   TenderFollowUpDTO,
+  type AvailableLeadsCoverageStatsDTO,
   type TenderClientListDTO,
 } from "../dtos/Tenders.dto";
 import { Tender } from "../entities/Tender.entity";
@@ -185,5 +186,29 @@ export class TenderService {
       organizationId,
     );
     return rows.map((t) => this.serializeTenderClientList(t));
+  }
+
+  /** Same pool as `getTendersForOrganizationCoverage`, aggregated for dashboard stats. */
+  static async getAvailableLeadsCoverageStats(
+    organizationId: number,
+  ): Promise<AvailableLeadsCoverageStatsDTO> {
+    const tenders = await this.getTendersForOrganizationCoverage(organizationId);
+    const cutoffMs = Date.now() - 24 * 60 * 60 * 1000;
+    let last24h = 0;
+
+    for (const tender of tenders) {
+      const createdAt =
+        tender.createdAt instanceof Date
+          ? tender.createdAt
+          : new Date(tender.createdAt);
+      if (
+        !Number.isNaN(createdAt.getTime()) &&
+        createdAt.getTime() >= cutoffMs
+      ) {
+        last24h += 1;
+      }
+    }
+
+    return { total: tenders.length, last24h };
   }
 }

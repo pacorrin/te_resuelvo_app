@@ -33,12 +33,10 @@ import {
 } from "@/src/lib/services/service-ticket-payment.service";
 import { cn, toastError, toastSuccess } from "@/src/lib/utils";
 
-function formatUsd(amount: number) {
-  return new Intl.NumberFormat("en-US", {
+function formatMxn(amount: number) {
+  return new Intl.NumberFormat("es-MX", {
     style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency: "MXN",
   }).format(amount);
 }
 
@@ -148,13 +146,13 @@ export function ServiceTicketPaymentsModal({
             <div className="flex justify-between gap-2 py-0.5">
               <span className="text-muted-foreground">Total abonos</span>
               <span className="font-medium tabular-nums">
-                {formatUsd(credits)}
+                {formatMxn(credits)}
               </span>
             </div>
             <div className="flex justify-between gap-2 py-0.5">
               <span className="text-muted-foreground">Total cargos</span>
               <span className="font-medium tabular-nums">
-                {formatUsd(debits)}
+                {formatMxn(debits)}
               </span>
             </div>
             <Separator className="my-2" />
@@ -168,7 +166,7 @@ export function ServiceTicketPaymentsModal({
                     : "text-red-600 dark:text-red-400",
                 )}
               >
-                {formatUsd(net)}
+                {formatMxn(net)}
               </span>
             </div>
           </div>
@@ -199,7 +197,7 @@ export function ServiceTicketPaymentsModal({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="pay-amount">Monto (USD)</Label>
+              <Label htmlFor="pay-amount">Monto (MXN)</Label>
               <InputNumber
                 id="pay-amount"
                 allowDecimals
@@ -299,7 +297,7 @@ export function ServiceTicketPaymentsModal({
                           ServiceTicketPaymentBalanceType.CREDIT
                             ? "+"
                             : "−"}
-                          {formatUsd(p.amount)}
+                          {formatMxn(p.amount)}
                         </span>
                       </div>
                       {p.description ? (

@@ -16,7 +16,10 @@ import {
   saveRequestBodyToLocalFile,
 } from "@/src/lib/storage/local-storage.service";
 import { FileCategory, FileOwnerType } from "@/src/lib/storage/storage.enums";
-import { TenderClientListDTO } from "../dtos/Tenders.dto";
+import {
+  type PurchasedLeadsStatsDTO,
+  TenderClientListDTO,
+} from "../dtos/Tenders.dto";
 import { FileService } from "./file.service";
 import { OrganizationMemberService } from "./organization-member.service";
 import { TenderService } from "./tender.service";
@@ -124,6 +127,36 @@ export class ServiceTicketService {
       SERVICE_TICKET_RELATIONS,
     );
     return serviceTickets.map((serviceTicket) => this.serialize(serviceTicket));
+  }
+
+  /** Same pool as `_getTicketsByOrganization` / purchased leads tab, scoped to current month. */
+  static async getPurchasedLeadsStatsForOrganization(
+    organizationId: number,
+  ): Promise<PurchasedLeadsStatsDTO> {
+    if (!Number.isFinite(organizationId) || organizationId <= 0) {
+      return { thisMonth: 0 };
+    }
+
+    const tickets = await this.getAllBy({ organizationId });
+    const monthStart = new Date();
+    monthStart.setDate(1);
+    monthStart.setHours(0, 0, 0, 0);
+
+    let thisMonth = 0;
+    for (const ticket of tickets) {
+      const createdAt =
+        ticket.createdAt instanceof Date
+          ? ticket.createdAt
+          : new Date(ticket.createdAt);
+      if (
+        !Number.isNaN(createdAt.getTime()) &&
+        createdAt.getTime() >= monthStart.getTime()
+      ) {
+        thisMonth += 1;
+      }
+    }
+
+    return { thisMonth };
   }
 
   static async create(data: CreateServiceTicketInput): Promise<ServiceTicket> {

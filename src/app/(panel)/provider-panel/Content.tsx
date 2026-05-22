@@ -12,24 +12,45 @@ import { Button } from "@/src/components/ui/button";
 import Link from "next/link";
 import { auth } from "@/src/lib/auth/auth";
 import { OrganizationService } from "@/src/lib/services/organization.service";
+import { ServiceTicketService } from "@/src/lib/services/service-tickets.service";
+import { TenderService } from "@/src/lib/services/tender.service";
 
 export default async function Content() {
   const session = await auth();
   const userId = Number(session?.user?.id);
   let organizationId: number = 0;
+  let credits = 0;
   if (Number.isFinite(userId)) {
     try {
       const org = await OrganizationService.getOrganizationByUser(userId);
       organizationId = org.id;
+      credits = Number(org.credits) || 0;
     } catch {
       organizationId = 0;
+      credits = 0;
     }
   }
+
+  const availableLeads =
+    organizationId > 0
+      ? await TenderService.getAvailableLeadsCoverageStats(organizationId)
+      : { total: 0, last24h: 0 };
+
+  const purchasedLeads =
+    organizationId > 0
+      ? await ServiceTicketService.getPurchasedLeadsStatsForOrganization(
+          organizationId,
+        )
+      : { thisMonth: 0 };
 
   return (
     <>
       {/* Stats Section */}
-      <StatsGroup />
+      <StatsGroup
+        availableLeads={availableLeads}
+        purchasedLeads={purchasedLeads}
+        credits={credits}
+      />
 
       {/* Main Content */}
       <div className="flex flex-col lg:flex-row gap-6 w-full">
@@ -84,15 +105,15 @@ export default async function Content() {
               <div className="space-y-3 mb-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Plomería</span>
-                  <span className="font-semibold">$15 USD</span>
+                  <span className="font-semibold">$15 MXN</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Electricidad</span>
-                  <span className="font-semibold">$15 USD</span>
+                  <span className="font-semibold">$15 MXN</span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Pintura</span>
-                  <span className="font-semibold">$12 USD</span>
+                  <span className="font-semibold">$12 MXN</span>
                 </div>
               </div>
               <Separator className="mb-4" />

@@ -86,7 +86,7 @@ function LeadCardContent({
             Est. Trabajo
           </p>
           <p className="text-sm font-bold text-blue-600 dark:text-blue-400">
-            ${lead.price} <span className="text-[10px]">USD</span>
+            ${lead.price} <span className="text-[10px]">MXN</span>
           </p>
           <p className="mt-0.5 flex items-center gap-1 text-[11px] text-zinc-500 dark:text-zinc-400">
             {lead.status === "available" ? (

@@ -31,7 +31,7 @@ export class StripeService {
       line_items: [
         {
           price_data: {
-            currency: "usd",
+            currency: "mxn",
             tax_behavior: "inclusive",
             product_data: {
               name: `Lead - ${tenderBuyer.tender.service.name}`,

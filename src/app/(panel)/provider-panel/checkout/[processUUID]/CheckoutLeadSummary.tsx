@@ -32,13 +32,11 @@ export default function CheckoutLeadSummary({
   tenderQuestionAnswers,
 }: CheckoutLeadSummaryProps) {
   const formattedPrice =
-    Number.isFinite(lead.price) && lead.price >= 0
-      ? `${new Intl.NumberFormat("en-US", {
-          style: "currency",
-          currency: "USD",
-          maximumFractionDigits: 0,
-        }).format(lead.price)} USD`
-      : `$${lead.price} USD`;
+    new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN"
+    }).format(Number(lead.price) || 0) + " MXN";
+   
 
   return (
     <div className="rounded-xl border border-zinc-200 bg-linear-to-b from-zinc-50 to-white p-4 shadow-sm dark:border-zinc-800 dark:from-zinc-900/80 dark:to-zinc-950">

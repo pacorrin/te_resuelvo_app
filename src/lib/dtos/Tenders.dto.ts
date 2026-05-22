@@ -88,6 +88,15 @@ export interface TenderDTO {
  * JSON-serializable tender row for Server Actions / client boundaries.
  * (TypeORM entities are class instances and must not cross the wire.)
  */
+export interface AvailableLeadsCoverageStatsDTO {
+  total: number;
+  last24h: number;
+}
+
+export interface PurchasedLeadsStatsDTO {
+  thisMonth: number;
+}
+
 export interface TenderClientListDTO {
   id: number;
   serviceId: number;
