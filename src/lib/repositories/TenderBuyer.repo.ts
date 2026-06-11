@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { TenderBuyer } from "@/src/lib/entities/TenderBuyer.entity";
 import { Repository } from "typeorm";
 import {
@@ -10,7 +11,7 @@ import { TenderPaymentStatus } from "../enums/tender.enum";
 export class TenderBuyerRepository {
   private static async getRepo(): Promise<Repository<TenderBuyer>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("TenderBuyer");
+    return getEntityRepository(dataSource, TenderBuyer, "TenderBuyer");
   }
 
   static async findOneBy(

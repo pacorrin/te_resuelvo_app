@@ -26,7 +26,7 @@ export class OrganizationMember {
   @Column({ name: "ormem_user_email", type: "varchar", length: 150, nullable: false })
   userEmail!: string;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: false })
   @JoinColumn({ name: "ormem_user_id" })
   user?: User | null;
 

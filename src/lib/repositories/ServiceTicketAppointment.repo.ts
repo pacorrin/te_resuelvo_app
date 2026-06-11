@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { ServiceTicketAppointment } from "@/src/lib/entities/ServiceTicketAppointment.entity";
 import { ServiceTicketAppointmentStatus } from "@/src/lib/enums/service-ticket-appointment.enum";
 import { Repository } from "typeorm";
@@ -21,7 +22,11 @@ export interface UpdateServiceTicketAppointmentInput {
 export class ServiceTicketAppointmentRepository {
   private static async getRepo(): Promise<Repository<ServiceTicketAppointment>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository(ServiceTicketAppointment);
+    return getEntityRepository(
+      dataSource,
+      ServiceTicketAppointment,
+      "ServiceTicketAppointment",
+    );
   }
 
   static async findAllByTicketId(

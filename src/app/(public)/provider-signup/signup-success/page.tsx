@@ -191,7 +191,7 @@ export default async function SignupSuccessPage() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/provider-signup">
+            <Link href="/login">
               <Button size="lg" className="sm:min-w-[200px]">
                 Iniciar Sesión
               </Button>

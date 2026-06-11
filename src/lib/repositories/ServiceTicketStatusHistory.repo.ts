@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import type {
   CreateServiceTicketStatusHistoryInput,
   DeleteServiceTicketStatusHistoryInput,
@@ -15,7 +16,11 @@ export type {
 export class ServiceTicketStatusHistoryRepository {
   private static async getRepo(): Promise<Repository<ServiceTicketStatusHistory>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("ServiceTicketStatusHistory");
+    return getEntityRepository(
+      dataSource,
+      ServiceTicketStatusHistory,
+      "ServiceTicketStatusHistory",
+    );
   }
 
   static async findOneBy(

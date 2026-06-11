@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { OrganizationService } from "@/src/lib/entities/OrganizationService.entity";
 import { Repository } from "typeorm";
 
@@ -11,7 +12,7 @@ export interface SearchOrganizationService {
 export class OrganizationServiceRepository {
   private static async getRepo(): Promise<Repository<OrganizationService>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("OrganizationService");
+    return getEntityRepository(dataSource, OrganizationService, "OrganizationService");
   }
 
   static async findOneBy(

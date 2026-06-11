@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { Tender } from "@/src/lib/entities/Tender.entity";
 import { Repository } from "typeorm";
 import {
@@ -39,7 +40,7 @@ function haversineKmSql(
 export class TenderRepository {
   private static async getRepo(): Promise<Repository<Tender>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("Tender");
+    return getEntityRepository(dataSource, Tender, "Tender");
   }
 
   static async findOneBy(

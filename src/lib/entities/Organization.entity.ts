@@ -47,7 +47,7 @@ export class Organization {
   @Column({ name: "org_administrator_id", type: "int", nullable: true })
   administratorId?: number | null;
 
-  @ManyToOne(() => User)
+  @ManyToOne(() => User, { nullable: true})
   @JoinColumn({ name: "org_administrator_id" })
   administrator?: User | null;
 

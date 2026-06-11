@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { Question } from "@/src/lib/entities/Question.entity";
 import { Repository } from "typeorm";
 import {
@@ -10,7 +11,7 @@ import {
 export class QuestionRepository {
   private static async getRepo(): Promise<Repository<Question>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("Question");
+    return getEntityRepository(dataSource, Question, "Question");
   }
 
   static async findOneBy(

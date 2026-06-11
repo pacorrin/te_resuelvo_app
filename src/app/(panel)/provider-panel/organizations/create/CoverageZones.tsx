@@ -71,8 +71,6 @@ const defaultZoneState: CreateCoverageAreaDTO = {
   latitude: 0,
   longitude: 0,
   radiusKm: 0,
-  description: "",
-  administratorId: 0,
 };
 
 export default function CoverageZonesSection({
@@ -97,7 +95,6 @@ export default function CoverageZonesSection({
         latitude: currentZone.latitude,
         longitude: currentZone.longitude,
         radiusKm: currentZone.radiusKm,
-        description: currentZone.description,
       };
       const newZones = [...coverageZones, newZone];
       setCoverageZones(newZones as CreateOrganizationCoverageAreaDTO[]);
@@ -191,11 +188,9 @@ export default function CoverageZonesSection({
             <Textarea
               id="zoneDescription"
               placeholder="Ej: Atendemos toda la zona metropolitana del norte..."
-              value={currentZone.description}
               onChange={(e) =>
                 setCurrentZone((prev) => ({
                   ...prev,
-                  description: e.target.value,
                 }))
               }
               rows={3}
@@ -243,9 +238,6 @@ export default function CoverageZonesSection({
                         Coordenadas: {zone.latitude.toFixed(4)},{" "}
                         {zone.longitude.toFixed(4)}
                       </p>
-                      {zone.description && (
-                        <p className="text-sm mt-2">{zone.description}</p>
-                      )}
                     </div>
                     <Button
                       type="button"

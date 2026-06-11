@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import type {
   CreateServiceTicketPaymentInput,
   SearchServiceTicketPayment,
@@ -14,7 +15,11 @@ export type {
 export class ServiceTicketPaymentRepository {
   private static async getRepo(): Promise<Repository<ServiceTicketPayment>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("ServiceTicketPayment");
+    return getEntityRepository(
+      dataSource,
+      ServiceTicketPayment,
+      "ServiceTicketPayment",
+    );
   }
 
   static async findOneBy(

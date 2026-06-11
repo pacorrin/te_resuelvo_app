@@ -1,11 +1,9 @@
 "use client";
 
-import { User as AuthUser } from "next-auth";
+import type { Session } from "next-auth";
 import { createContext, useContext } from "react";
 
-interface User extends AuthUser {
-  nameInitial?: string;
-}
+type User = Session["user"];
 
 interface UserProviderProps {
   user: User | undefined;

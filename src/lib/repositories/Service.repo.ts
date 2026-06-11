@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { Service } from "@/src/lib/entities/Service.entity";
 import { FindOptionsWhere, Like, Repository } from "typeorm";
 import { SearchService } from "../enums/service.enum";
@@ -7,7 +8,7 @@ import { SearchService } from "../enums/service.enum";
 export class ServiceRepository {
   private static async getRepo(): Promise<Repository<Service>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("Service");
+    return getEntityRepository(dataSource, Service, "Service");
   }
 
   static async findOneBy(

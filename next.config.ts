@@ -7,7 +7,6 @@ const nextConfig: NextConfig = {
     "reflect-metadata",
     "nodemailer",
   ],
-  // Server Actions default body limit is 1 MB; incidence evidence / quotes need more.
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",

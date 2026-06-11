@@ -26,18 +26,12 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const session = await auth();
-  const nameInitial = session?.user?.name
-    ?.split(" ")
-    .map((name) => name[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <UserProvider user={{ ...session?.user, nameInitial }}>
+        <UserProvider user={session?.user}>
           {children}
         </UserProvider>
         <Toaster />

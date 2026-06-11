@@ -17,27 +17,37 @@ import { ServiceTicketIncidence } from "../entities/ServiceTicketIncidence.entit
 import { ServiceTicketPayment } from "../entities/ServiceTicketPayment.entity";
 import { ServiceTicketStatusHistory } from "../entities/ServiceTicketStatusHistory.entity";
 import { ServiceTicketAppointment } from "../entities/ServiceTicketAppointment.entity";
+import { stabilizeEntityClassNames } from "./stabilize-entity-class-names";
 
 /** Single source of truth for TypeORM entity registration (app runtime + stale-cache checks). */
-export const APP_ENTITIES = [
-  User,
-  Tender,
-  Organization,
-  OrganizationMember,
-  Service,
-  OrganizationService,
-  OrganizationCoverageArea,
-  FileEntity,
-  TenderBuyer,
-  QuestionSet,
-  Question,
-  QuestionSetAnswer,
-  ServiceTicket,
-  ServiceTicketIncidence,
-  ServiceTicketPayment,
-  ServiceTicketStatusHistory,
-  ServiceTicketAppointment,
+const ENTITY_REGISTRY = [
+  { entity: User, name: "User" },
+  { entity: Tender, name: "Tender" },
+  { entity: Organization, name: "Organization" },
+  { entity: OrganizationMember, name: "OrganizationMember" },
+  { entity: Service, name: "Service" },
+  { entity: OrganizationService, name: "OrganizationService" },
+  { entity: OrganizationCoverageArea, name: "OrganizationCoverageArea" },
+  { entity: FileEntity, name: "FileEntity" },
+  { entity: TenderBuyer, name: "TenderBuyer" },
+  { entity: QuestionSet, name: "QuestionSet" },
+  { entity: Question, name: "Question" },
+  { entity: QuestionSetAnswer, name: "QuestionSetAnswer" },
+  { entity: ServiceTicket, name: "ServiceTicket" },
+  { entity: ServiceTicketIncidence, name: "ServiceTicketIncidence" },
+  { entity: ServiceTicketPayment, name: "ServiceTicketPayment" },
+  { entity: ServiceTicketStatusHistory, name: "ServiceTicketStatusHistory" },
+  { entity: ServiceTicketAppointment, name: "ServiceTicketAppointment" },
 ] as const;
+
+export const APP_ENTITIES = ENTITY_REGISTRY.map((entry) => entry.entity);
+
+/** Call before DataSource.initialize() so production bundles keep stable entity names. */
+export function ensureEntityMetadataReady(): void {
+  stabilizeEntityClassNames(ENTITY_REGISTRY);
+}
+
+ensureEntityMetadataReady();
 
 let AppDataSourceInstance: DataSource;
 
@@ -61,4 +71,3 @@ try {
 }
 
 export const AppDataSource = AppDataSourceInstance;
-

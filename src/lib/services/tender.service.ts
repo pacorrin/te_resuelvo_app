@@ -197,10 +197,7 @@ export class TenderService {
     let last24h = 0;
 
     for (const tender of tenders) {
-      const createdAt =
-        tender.createdAt instanceof Date
-          ? tender.createdAt
-          : new Date(tender.createdAt);
+      const createdAt = new Date(tender.createdAt);
       if (
         !Number.isNaN(createdAt.getTime()) &&
         createdAt.getTime() >= cutoffMs

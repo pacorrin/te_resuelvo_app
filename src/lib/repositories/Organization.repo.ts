@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { Organization } from "@/src/lib/entities/Organization.entity";
 import { Repository } from "typeorm";
 import {
@@ -10,7 +11,7 @@ import { OrganizationBusinessType } from "../enums/organizations.enum";
 export class OrganizationRepository {
   private static async getRepo(): Promise<Repository<Organization>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("Organization");
+    return getEntityRepository(dataSource, Organization, "Organization");
   }
 
   static async findOneBy(id: number): Promise<Organization | null> {

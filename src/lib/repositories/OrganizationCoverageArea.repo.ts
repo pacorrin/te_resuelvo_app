@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { OrganizationCoverageArea } from "@/src/lib/entities/OrganizationCoverageArea.entity";
 import { Repository } from "typeorm";
 import type { CreateOrganizationCoverageAreaDTO } from "@/src/lib/dtos/OrganizationCoverageArea.dto";
@@ -13,7 +14,11 @@ export class OrganizationCoverageAreaRepository {
     Repository<OrganizationCoverageArea>
   > {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("OrganizationCoverageArea");
+    return getEntityRepository(
+      dataSource,
+      OrganizationCoverageArea,
+      "OrganizationCoverageArea",
+    );
   }
 
   static async findOneBy(

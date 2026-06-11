@@ -86,3 +86,40 @@ WHERE 2 * 6371 * ASIN(
     )
 ) <= radius_km;
 ```
+
+## Build
+
+### Build
+
+To create a standalone production build:
+
+```bash
+pnpm build
+```
+
+To start the production server after building:
+
+```bash
+pnpm start
+```
+
+Zip the  files and copy in the hostinger server folder
+
+```
+.next/standalone
+.next/static
+public
+```
+
+command for mac:
+
+```
+zip -r project.zip . \
+  -x "node_modules/*" \
+  -x ".next/*" \
+  -x ".git/*" \
+  -x ".env*" \
+  -x "deploy.zip" \
+  -x "pnpm-workspace.yaml" \
+  -x "pnpm-lock.yaml"
+```

@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { FileEntity } from "@/src/lib/entities/File.entity";
 import { FileOwnerType } from "@/src/lib/storage/storage.enums";
 import { Repository } from "typeorm";
@@ -7,7 +8,7 @@ import type { CreateFileDTO, UpdateFileDTO } from "../dtos/File.dto";
 export class FileRepository {
   private static async getRepo(): Promise<Repository<FileEntity>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("FileEntity");
+    return getEntityRepository(dataSource, FileEntity, "FileEntity");
   }
 
   static async findOneBy(id: number): Promise<FileEntity | null> {

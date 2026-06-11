@@ -1,4 +1,5 @@
 import { getDataSource } from "@/src/lib/db/connection";
+import { getEntityRepository } from "@/src/lib/db/get-entity-repository";
 import { OrganizationMember } from "@/src/lib/entities/OrganizationMember.entity";
 import { Repository } from "typeorm";
 import { CreateOrganizationMemberDTO } from "../dtos/OrganizationMembers.dto";
@@ -6,7 +7,7 @@ import { CreateOrganizationMemberDTO } from "../dtos/OrganizationMembers.dto";
 export class OrganizationMemberRepository {
   private static async getRepo(): Promise<Repository<OrganizationMember>> {
     const dataSource = await getDataSource();
-    return dataSource.getRepository("OrganizationMember");
+    return getEntityRepository(dataSource, OrganizationMember, "OrganizationMember");
   }
 
   static async findOneBy(

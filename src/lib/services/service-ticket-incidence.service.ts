@@ -90,7 +90,9 @@ export class ServiceTicketIncidenceService {
       type: input.type,
       description: input.description,
       createdById:
-        Number.isFinite(createdById) && createdById! > 0 ? createdById : null,
+        Number.isFinite(createdById) && createdById! > 0
+          ? createdById
+          : undefined,
     });
     const reloaded = await ServiceTicketIncidenceRepository.findOneBy(
       { id: row.id },

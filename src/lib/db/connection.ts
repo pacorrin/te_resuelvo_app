@@ -17,7 +17,9 @@ async function destroyDataSource(ds: DataSource | undefined): Promise<void> {
 }
 
 export const getDataSource = async () => {
-  const { AppDataSource } = await import("./data-source");
+  const { AppDataSource, ensureEntityMetadataReady } = await import(
+    "./data-source"
+  );
 
   if (globalForDb.dataSource?.isInitialized) {
     if (await dataSourceHasAllEntities(globalForDb.dataSource)) {
@@ -32,6 +34,7 @@ export const getDataSource = async () => {
   }
 
   if (!AppDataSource.isInitialized) {
+    ensureEntityMetadataReady();
     await AppDataSource.initialize();
   }
 
