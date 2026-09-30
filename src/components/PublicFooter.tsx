@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { legalConfig } from "@/src/lib/legal/legal-config";
 
 export type PublicNavTarget =
   | "home"
@@ -66,8 +67,22 @@ export function PublicFooter({ onNavigate }: PublicFooterProps) {
           <div>
             <h4 className="font-semibold mb-3">Legal</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li>Términos</li>
-              <li>Privacidad</li>
+              <li>
+                <Link
+                  href={legalConfig.termsPath}
+                  className="hover:text-foreground transition-colors"
+                >
+                  Términos
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href={legalConfig.privacyPath}
+                  className="hover:text-foreground transition-colors"
+                >
+                  Privacidad
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

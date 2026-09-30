@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, ClipboardList } from "lucide-react";
 import { Button } from "@/src/components/ui/button";
@@ -32,6 +33,7 @@ import {
 import { toast } from "sonner";
 import { Spinner } from "@/src/components/ui/spinner";
 import { getTenderNumber } from "@/src/lib/utils/tender.utils";
+import { legalConfig } from "@/src/lib/legal/legal-config";
 import { cn, toastError, toastInfo } from "@/src/lib/utils";
 
 const inputSurface =
@@ -590,7 +592,25 @@ export function CustomerRequestForm({
               htmlFor="hero-terms"
               className="text-sm font-normal leading-snug text-muted-foreground"
             >
-              Acepto los términos y condiciones y la política de privacidad.
+              Acepto los{" "}
+              <Link
+                href={legalConfig.termsPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                términos y condiciones
+              </Link>{" "}
+              y el{" "}
+              <Link
+                href={legalConfig.privacyPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary underline-offset-4 hover:underline"
+              >
+                aviso de privacidad
+              </Link>
+              .
             </Label>
           </div>
 

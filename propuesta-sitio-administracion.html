@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Te Resuelvo — Propuesta del sitio de administración</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --ink: #1c1917;
+        --ink-soft: #44403c;
+        --muted: #57534e;
+        --line: #e7e5e4;
+        --paper: #f6f4f0;
+        --sheet: #fffcf8;
+        --blue: #044bcf;
+        --note: #3f2a1d;
+        --note-bg: #f3ebe3;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      ::selection {
+        background: #d6e2fb;
+        color: var(--ink);
+      }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: Geist, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        font-size: 18px;
+        line-height: 1.55;
+      }
+
+      a {
+        color: var(--blue);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      a:focus-visible {
+        outline: 2px solid var(--blue);
+        outline-offset: 3px;
+      }
+
+      .skip {
+        position: absolute;
+        left: 16px;
+        top: -48px;
+        background: var(--ink);
+        color: #fff;
+        padding: 8px 12px;
+      }
+
+      .skip:focus {
+        top: 12px;
+      }
+
+      .frame {
+        display: grid;
+        grid-template-columns: 210px minmax(0, 42rem);
+        gap: 56px;
+        justify-content: center;
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 48px 32px 112px;
+      }
+
+      nav {
+        position: sticky;
+        top: 32px;
+        align-self: start;
+      }
+
+      nav ol {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      nav a {
+        display: block;
+        padding: 5px 0;
+        color: var(--muted);
+        text-decoration: none;
+        font-size: 14px;
+        line-height: 1.35;
+      }
+
+      nav a:hover,
+      nav a:focus-visible {
+        color: var(--blue);
+      }
+
+      header {
+        margin-bottom: 8px;
+        padding-bottom: 32px;
+        border-bottom: 2px solid var(--blue);
+      }
+
+      h1 {
+        margin: 0 0 18px;
+        font-size: 44px;
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        line-height: 1.08;
+        text-wrap: balance;
+      }
+
+      .lede {
+        margin: 0;
+        max-width: 38em;
+        color: var(--ink-soft);
+      }
+
+      .meta {
+        margin: 22px 0 0;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      h2 {
+        margin: 0 0 12px;
+        font-size: 30px;
+        font-weight: 500;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+        text-wrap: balance;
+      }
+
+      h3 {
+        margin: 28px 0 8px;
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      p {
+        margin: 0 0 14px;
+      }
+
+      section {
+        padding: 40px 0 36px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      section p,
+      section li {
+        max-width: 65ch;
+      }
+
+      ul,
+      ol.plain {
+        margin: 8px 0 0;
+        padding-left: 1.2em;
+      }
+
+      li {
+        margin: 0 0 10px;
+      }
+
+      li strong {
+        font-weight: 650;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 8px 0 4px;
+        font-size: 16px;
+      }
+
+      caption {
+        caption-side: bottom;
+        padding-top: 10px;
+        text-align: left;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      th,
+      td {
+        text-align: left;
+        vertical-align: top;
+        padding: 14px 16px 14px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      th {
+        font-size: 13px;
+        font-weight: 650;
+        color: var(--muted);
+      }
+
+      .note {
+        margin-top: 20px;
+        padding: 16px 18px;
+        background: var(--note-bg);
+        color: var(--note);
+        max-width: none;
+      }
+
+      .quiet {
+        color: var(--ink-soft);
+      }
+
+      footer {
+        padding-top: 28px;
+        font-size: 14px;
+        color: var(--muted);
+      }
+
+      @media (max-width: 860px) {
+        .frame {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          padding: 28px 20px 80px;
+        }
+
+        nav {
+          position: static;
+          padding-bottom: 16px;
+          border-bottom: 1px solid var(--line);
+        }
+
+        h1 {
+          font-size: 34px;
+        }
+
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+
+      @media print {
+        body {
+          background: white;
+          font-size: 12pt;
+        }
+
+        .skip,
+        nav {
+          display: none;
+        }
+
+        .frame {
+          display: block;
+          max-width: none;
+          padding: 0;
+        }
+
+        a {
+          color: inherit;
+          text-decoration: none;
+        }
+
+        section {
+          break-inside: avoid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#contenido">Saltar al contenido</a>
+    <div class="frame">
+      <nav aria-label="Contenido de la propuesta">
+        <ol>
+          <li><a href="#decisiones">Decisiones de esta etapa</a></li>
+          <li><a href="#acceso">1. Acceso</a></li>
+          <li><a href="#catalogo">2. Catálogo</a></li>
+          <li><a href="#organizaciones">3. Organizaciones</a></li>
+          <li><a href="#leads">4. Leads y compras</a></li>
+          <li><a href="#pagos">5. Pagos</a></li>
+          <li><a href="#devoluciones">6. Lead inválido</a></li>
+          <li><a href="#calidad">7. Calidad</a></li>
+          <li><a href="#reportes">8. Reportes</a></li>
+          <li><a href="#soporte">9. Soporte al cliente</a></li>
+          <li><a href="#cuestionarios">10. Cuestionarios</a></li>
+          <li><a href="#cobertura">11. Cobertura</a></li>
+          <li><a href="#bitacora">12. Bitácora</a></li>
+          <li><a href="#correos">13. Correos</a></li>
+          <li><a href="#fuera">Fuera de este sitio</a></li>
+        </ol>
+      </nav>
+
+      <main id="contenido">
+        <header>
+          <h1>Sitio de administración de Te Resuelvo</h1>
+          <p class="lede">
+            Propuesta de la segunda etapa: un sitio para el equipo de Te
+            Resuelvo, separado del panel de los proveedores. Sirve para ver
+            el negocio completo, corregir lo que el cobro automático no
+            cierra, y elegir cómo se atiende un lead que el proveedor
+            considera inválido.
+          </p>
+          <p class="meta">30 de septiembre de 2026 · Propuesta para revisión</p>
+        </header>
+
+        <section id="decisiones">
+          <h2>Decisiones de esta etapa</h2>
+          <p class="quiet">
+            El orden sigue el funcionamiento actual. El cliente deja una
+            solicitud, el proveedor que cubre el rubro y la zona paga el
+            precio del lead, y al confirmarse el pago se libera el contacto
+            y nace el seguimiento del servicio. Los primeros módulos permiten
+            operar ese ciclo. Los últimos informan y atienden casos sueltos.
+          </p>
+          <ol class="plain">
+            <li>
+              <strong>El proveedor compra al registrarse.</strong>
+              Este sitio no agrega una aprobación previa. Puede comprar desde
+              que termina el alta.
+            </li>
+            <li>
+              <strong>Los administradores tienen el mismo acceso.</strong>
+              Quien entra al sitio ve y puede hacer todo. En esta etapa no hay
+              perfiles de operación, finanzas ni soporte.
+            </li>
+            <li>
+              <strong>El lead inválido se elige entre tres alternativas.</strong>
+              Reembolso, crédito o lead de reemplazo. Las tres están en el
+              módulo 6 para decidirlas con el cliente. Se construye la que se
+              elija.
+            </li>
+          </ol>
+        </section>
+
+        <section id="acceso">
+          <h2>1. Acceso al sitio</h2>
+          <p>
+            Este módulo va primero. Hoy cualquier persona con cuenta entra al
+            panel de proveedor, y ese panel solo muestra la información de su
+            organización. El sitio de administración es otro lugar, con
+            usuarios propios de Te Resuelvo.
+          </p>
+          <ul>
+            <li>
+              <strong>Usuarios administradores.</strong>
+              Alta y baja de quienes operan la plataforma. Todos ven y pueden
+              hacer lo mismo.
+            </li>
+            <li>
+              <strong>Inicio de sesión aparte</strong>
+              del panel de proveedor y del código con el que el cliente
+              consulta su solicitud.
+            </li>
+            <li>
+              <strong>El panel de proveedor se mantiene</strong>
+              para que cada organización compre leads y dé seguimiento a sus
+              servicios.
+            </li>
+          </ul>
+        </section>
+
+        <section id="catalogo">
+          <h2>2. Catálogo y precio del lead</h2>
+          <p>
+            El precio que paga el proveedor sale del catálogo de servicios.
+            Cambiar un rubro o su precio hoy se hace directo en la base de
+            datos. Este módulo es la palanca de cobro de la plataforma.
+          </p>
+          <ul>
+            <li>
+              <strong>Listar, crear y editar servicios</strong>
+              (aire acondicionado y los rubros que se sumen).
+            </li>
+            <li>
+              <strong>Definir el precio del lead</strong>
+              por servicio. Ese monto es el total que cobra Stripe, con el
+              IVA incluido en el precio.
+            </li>
+            <li>
+              <strong>Activar o pausar un servicio</strong>
+              para que deje de ofrecerse en el sitio público y en el panel de
+              proveedores.
+            </li>
+            <li>
+              <strong>Descripción del servicio</strong>
+              que ve el cliente al pedir ayuda.
+            </li>
+          </ul>
+        </section>
+
+        <section id="organizaciones">
+          <h2>3. Organizaciones</h2>
+          <p>
+            Cada proveedor es una organización. Ella elige qué servicios
+            ofrece y en qué radio trabaja, y solo ve leads de su rubro y de
+            su zona. El registro sigue siendo inmediato.
+          </p>
+          <ul>
+            <li>
+              <strong>Directorio</strong>
+              de organizaciones, con fecha de alta, servicios y zonas de
+              cobertura.
+            </li>
+            <li>
+              <strong>Ficha</strong>
+              con los miembros del equipo y el administrador de esa
+              organización.
+            </li>
+            <li>
+              <strong>Suspender y reactivar.</strong>
+              Sirve cuando hay un abuso o un error, no como filtro antes de
+              la primera compra. Una organización suspendida deja de ver y
+              comprar leads.
+            </li>
+            <li>
+              <strong>Consulta de cobertura.</strong>
+              Ver el centro y el radio de cada zona, para entender por qué
+              una organización recibe o no una solicitud.
+            </li>
+          </ul>
+        </section>
+
+        <section id="leads">
+          <h2>4. Leads y compras</h2>
+          <p>
+            Una solicitud del cliente es un lead. Puede comprarlo más de una
+            organización: el pago da acceso al contacto y la posibilidad de
+            competir por el trabajo, no la exclusividad del cliente. Cada
+            organización ve solo lo suyo. Este módulo ve el conjunto.
+          </p>
+          <ul>
+            <li>
+              <strong>Bandeja de solicitudes</strong>
+              con rubro, zona, fecha y resumen del problema.
+            </li>
+            <li>
+              <strong>Quién califica</strong>
+              para verlo, según servicio y cobertura, y quién ya lo compró.
+            </li>
+            <li>
+              <strong>Estado de cada compra:</strong>
+              pendiente, pagada, fallida o cancelada.
+            </li>
+            <li>
+              <strong>Datos del cliente</strong>
+              visibles para el equipo de Te Resuelvo. El proveedor sigue
+              viéndolos solo después de pagar.
+            </li>
+            <li>
+              <strong>Ticket de seguimiento</strong>
+              asociado a cada compra pagada, en lectura. Citas, notas y el
+              cobro al cliente final siguen en el panel del proveedor.
+            </li>
+          </ul>
+        </section>
+
+        <section id="pagos">
+          <h2>5. Pagos y excepciones</h2>
+          <p>
+            El contacto del cliente y el ticket de seguimiento nacen cuando
+            Stripe confirma el pago. Si esa confirmación no llega, el
+            proveedor pudo haber pagado y quedarse sin los datos. Este módulo
+            cierra ese caso con evidencia del cobro.
+          </p>
+          <ul>
+            <li>
+              <strong>Listado de cobros</strong>
+              con monto, organización, lead e identificador de Stripe.
+            </li>
+            <li>
+              <strong>Compras atoradas</strong>
+              en pendiente o fallidas, separadas de las ya pagadas.
+            </li>
+            <li>
+              <strong>Completar una compra</strong>
+              cuando Stripe ya cobró y la plataforma no lo reflejó: se marca
+              pagada, se crea el seguimiento y se envían los avisos al cliente
+              y al proveedor.
+            </li>
+            <li>
+              <strong>Un intento que Stripe no cobró no se marca como pagado.</strong>
+            </li>
+          </ul>
+        </section>
+
+        <section id="devoluciones">
+          <h2>6. Lead inválido: tres alternativas</h2>
+          <p>
+            El proveedor paga antes de ver el contacto. Si el teléfono no
+            contesta, los datos están mal o la solicitud no era real, hoy no
+            hay forma de devolverle valor. Hay que elegir una alternativa
+            antes de construir el módulo. Se construye la que se elija.
+          </p>
+          <p class="quiet">
+            En los tres casos el equipo registra el motivo, la compra
+            afectada y quién lo autorizó. Un lead marcado inválido deja de
+            ofrecerse a nuevas organizaciones.
+          </p>
+
+          <table>
+            <caption>
+              Comparación para la reunión. Una sola alternativa se construye.
+            </caption>
+            <thead>
+              <tr>
+                <th scope="col">Alternativa</th>
+                <th scope="col">Qué recibe el proveedor</th>
+                <th scope="col">Qué implica para Te Resuelvo</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">Reembolso en Stripe</th>
+                <td>
+                  El dinero regresa al mismo medio de pago. La compra queda
+                  anulada y pierde el acceso a ese contacto.
+                </td>
+                <td>
+                  Es la respuesta más clara para el proveedor. Sale efectivo
+                  de la plataforma y depende de los plazos de Stripe. Conviene
+                  cuando el lead era falso o inutilizable.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Crédito para la siguiente compra</th>
+                <td>
+                  No sale dinero. Queda un saldo a favor, del mismo monto, que
+                  se aplica al próximo lead que compre esa organización.
+                </td>
+                <td>
+                  Conserva el ingreso y es simple de explicar si el proveedor
+                  va a seguir comprando. Exige un saldo por organización y una
+                  regla clara de caducidad.
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Lead de reemplazo</th>
+                <td>
+                  Se le asigna otra solicitud, sin un cobro nuevo, en el mismo
+                  rubro y dentro de su cobertura.
+                </td>
+                <td>
+                  Se parece a la promesa de reponer el contacto. Solo funciona
+                  si hay otro lead disponible. Si no hay, el proveedor espera,
+                  o el caso pasa a crédito o a reembolso.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Con qué compararlas en la reunión</h3>
+          <ul>
+            <li>
+              <strong>Caja.</strong>
+              El reembolso devuelve dinero. El crédito y el reemplazo lo
+              retienen.
+            </li>
+            <li>
+              <strong>Confianza del proveedor.</strong>
+              El reembolso se entiende de inmediato. El reemplazo se parece
+              más a la promesa de un contacto válido.
+            </li>
+            <li>
+              <strong>Operación.</strong>
+              El crédito necesita un saldo. El reemplazo necesita otros leads
+              disponibles. El reembolso necesita el comprobante de Stripe.
+            </li>
+            <li>
+              <strong>Abuso.</strong>
+              Las tres necesitan un motivo y un tope. Si no, un proveedor
+              puede pedir devolución de todo lo que no cerró en trabajo.
+            </li>
+          </ul>
+          <p class="note">
+            Los abonos que el proveedor registra con su cliente, como un
+            anticipo o el saldo del trabajo, son otra cosa. No son el cobro
+            de Te Resuelvo y no entran en este módulo.
+          </p>
+        </section>
+
+        <section id="calidad">
+          <h2>7. Calidad del lead</h2>
+          <p>
+            La plataforma se compromete a que un lead sea una oportunidad
+            real. Hoy la solicitud del sitio público entra directo al pool.
+            Este módulo viene después de poder operar el cobro.
+          </p>
+          <ul>
+            <li>
+              <strong>Revisar una solicitud</strong>
+              antes o justo después de publicarla: datos completos, rubro
+              correcto, zona identificable.
+            </li>
+            <li>
+              <strong>Retirarla del pool</strong>
+              si es spam, duplicada o imposible de atender, con una nota del
+              motivo.
+            </li>
+            <li>
+              <strong>Ver las respuestas del cuestionario</strong>
+              que el cliente contestó al pedir el servicio.
+            </li>
+          </ul>
+        </section>
+
+        <section id="reportes">
+          <h2>8. Reportes</h2>
+          <p>
+            Un tablero corto para leer el mismo ciclo que los módulos
+            anteriores permiten corregir. No es una herramienta de análisis
+            aparte.
+          </p>
+          <ul>
+            <li>
+              <strong>Embudo:</strong>
+              solicitudes creadas, con al menos un proveedor que califica, y
+              compradas.
+            </li>
+            <li>
+              <strong>Ingreso</strong>
+              por servicio y por periodo, contando solo compras confirmadas.
+            </li>
+            <li>
+              <strong>Compras por estado de pago,</strong>
+              para ver lo pendiente o fallido.
+            </li>
+            <li>
+              <strong>Seguimientos por estado</strong>
+              (pendiente, contactado, en proceso, cotizado, terminado,
+              cancelado), en lectura.
+            </li>
+            <li>
+              <strong>Filtro por fechas</strong>
+              y por servicio.
+            </li>
+          </ul>
+        </section>
+
+        <section id="soporte">
+          <h2>9. Soporte al cliente</h2>
+          <p>
+            El cliente no tiene cuenta. Entra a ver su solicitud con un código
+            de seis dígitos que cambia cada vez que lo usa. Cuando el correo
+            no llega, alguien de Te Resuelvo tiene que reenviarlo sin entrar
+            al panel de un proveedor.
+          </p>
+          <ul>
+            <li>
+              <strong>Buscar una solicitud</strong>
+              por nombre, teléfono o folio.
+            </li>
+            <li>
+              <strong>Reenviar el código</strong>
+              de acceso al correo del cliente.
+            </li>
+            <li>
+              <strong>Ver en qué punto va</strong>
+              la solicitud y qué proveedores ya la compraron, sin mostrar las
+              notas internas de esos proveedores.
+            </li>
+          </ul>
+        </section>
+
+        <section id="cuestionarios">
+          <h2>10. Cuestionarios</h2>
+          <p>
+            Cada servicio puede tener preguntas que califican la solicitud,
+            por ejemplo el tipo de equipo o la urgencia. El proveedor las ve
+            antes de pagar. El formulario público ya funciona cuando el
+            cuestionario está cargado.
+          </p>
+          <ul>
+            <li>
+              <strong>Ver y editar las preguntas</strong>
+              de cada servicio.
+            </li>
+            <li>
+              <strong>Orden, texto y si la respuesta es obligatoria.</strong>
+            </li>
+            <li>
+              <strong>Activar o pausar un cuestionario</strong>
+              sin borrar el historial de respuestas ya guardadas.
+            </li>
+          </ul>
+        </section>
+
+        <section id="cobertura">
+          <h2>11. Solicitudes sin cobertura</h2>
+          <p>
+            Si ninguna organización cubre el rubro y la zona, el lead no se
+            ofrece a nadie y no produce ingreso. Con pocos casos se detecta
+            en la bandeja del módulo 4. Con más volumen conviene una vista
+            propia.
+          </p>
+          <ul>
+            <li>
+              <strong>Lista de solicitudes sin ningún proveedor</strong>
+              dentro del radio.
+            </li>
+            <li>
+              <strong>Rubro y zona de cada una,</strong>
+              para decidir si falta reclutar proveedores o si el radio de los
+              actuales es corto.
+            </li>
+          </ul>
+        </section>
+
+        <section id="bitacora">
+          <h2>12. Bitácora</h2>
+          <p>
+            No hay perfiles distintos, así que cualquiera de los
+            administradores puede suspender una organización, completar un
+            pago o autorizar un lead inválido. La bitácora deja constancia de
+            quién lo hizo. No limita permisos. Cobra sentido cuando hay más
+            de una persona en el sitio.
+          </p>
+          <ul>
+            <li>
+              <strong>Registro</strong>
+              de suspensiones, cambios de precio, compras completadas a mano
+              y resoluciones de lead inválido.
+            </li>
+            <li>
+              <strong>Fecha, usuario y motivo</strong>
+              en cada movimiento.
+            </li>
+          </ul>
+        </section>
+
+        <section id="correos">
+          <h2>13. Correos que no salieron</h2>
+          <p>
+            La plataforma avisa por correo cuando se crea una solicitud,
+            cuando el cliente pide su código y cuando un proveedor compra.
+            Esos envíos ocurren en el momento y, si fallan, no queda rastro.
+            Conviene cuando el volumen haga frecuente ese fallo.
+          </p>
+          <ul>
+            <li>
+              <strong>Lista de envíos fallidos</strong>
+              con destinatario, tipo de aviso y fecha.
+            </li>
+            <li>
+              <strong>Reintento</strong>
+              del mismo correo.
+            </li>
+          </ul>
+        </section>
+
+        <section id="fuera">
+          <h2>Qué no entra en este sitio</h2>
+          <ul>
+            <li>
+              <strong>El panel del proveedor.</strong>
+              La compra de leads, las citas, las incidencias y los cobros
+              entre el proveedor y su cliente ya existen y se quedan ahí.
+            </li>
+            <li>
+              <strong>Aprobar proveedores antes de que compren.</strong>
+              El alta sigue siendo inmediata.
+            </li>
+            <li>
+              <strong>Perfiles distintos dentro del admin.</strong>
+              Todos los administradores tienen el mismo acceso.
+            </li>
+            <li>
+              <strong>Otros modelos de cobro:</strong>
+              comisión al cerrar el trabajo, precio con margen incluido o
+              mensualidad de proveedores. Hoy se cobra un precio fijo por
+              lead.
+            </li>
+            <li>
+              <strong>Chat, garantía del trabajo, depósito en garantía y un centro de disputas.</strong>
+              La atención de un lead inválido es el proceso del módulo 6.
+            </li>
+          </ul>
+        </section>
+
+        <footer>
+          <p>Te Resuelvo · Propuesta para revisión con el cliente · Septiembre 2026</p>
+        </footer>
+      </main>
+    </div>
+  </body>
+</html>

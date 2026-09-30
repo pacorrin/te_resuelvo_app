@@ -15,7 +15,9 @@ import { Checkbox } from "@/src/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/src/components/ui/alert";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { _registerUser } from "@/src/lib/actions/user.actions";
+import { legalConfig } from "@/src/lib/legal/legal-config";
 import { toast } from "sonner";
 
 export function SignupForm() {
@@ -263,9 +265,14 @@ export function SignupForm() {
               />
               <label htmlFor="terms" className="text-sm cursor-pointer">
                 Acepto los{" "}
-                <span className="text-primary hover:underline">
+                <Link
+                  href={legalConfig.termsPath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
                   términos y condiciones
-                </span>{" "}
+                </Link>{" "}
                 de uso de la plataforma <span className="text-red-500">*</span>
               </label>
             </div>
@@ -285,9 +292,14 @@ export function SignupForm() {
               />
               <label htmlFor="privacy" className="text-sm cursor-pointer">
                 Acepto el{" "}
-                <span className="text-primary hover:underline">
+                <Link
+                  href={legalConfig.privacyPath}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
                   aviso de privacidad
-                </span>{" "}
+                </Link>{" "}
                 <span className="text-red-500">*</span>
               </label>
             </div>

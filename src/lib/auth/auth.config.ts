@@ -1,5 +1,6 @@
 import type { DefaultSession, NextAuthConfig } from "next-auth";
 import { NextResponse } from "next/server";
+import { publicLegalPaths } from "@/src/lib/legal/legal-config";
 
 declare module "next-auth" {
   interface Session {
@@ -26,10 +27,13 @@ export const authConfig = {
         pathname.startsWith(route),
       );
       const isCustomerPortalRoute = pathname.startsWith("/seguimiento");
+      const isPublicLegalRoute = publicLegalPaths.some(
+        (route) => pathname === route || pathname.startsWith(`${route}/`),
+      );
 
       if (pathname.startsWith("/api")) return true;
 
-      if (isCustomerPortalRoute) return true;
+      if (isCustomerPortalRoute || isPublicLegalRoute) return true;
 
       if (isProtectedRoute && !isLoggedIn) {
         return NextResponse.redirect(new URL("/login", nextUrl));
