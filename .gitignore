@@ -43,3 +43,5 @@ next-env.d.ts
 
 storage
 project.zip
+# Knowledge graph outputs
+graphify-out/
